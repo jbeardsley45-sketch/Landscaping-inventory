@@ -132,6 +132,17 @@ button:active { transform:scale(0.98); }
 
 <script>
 "use strict";
+  function formatPhotoUrl(url) {
+  if (!url) return '';
+  url = url.trim();
+
+  const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|lh3\.googleusercontent\.com\/d\/)([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+  }
+
+  return url;
+}
 
 // PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyun8UxWmO0pXjN4cE5pDIBV0K6HeQAPRTIEf1KV3SETYCbe9-YOtpCisa4RHylySQx2g/exec";
@@ -192,9 +203,10 @@ function renderInventory(){
   const c = document.getElementById("inventoryList");
   c.innerHTML = "";
   Object.values(inventory).forEach(p => {
+    const photoUrl = formatPhotoUrl(p.photo);
     const r = document.createElement("div");
     r.className = "inventory-row";
-    r.innerHTML = `<div class="plant-row-left"><img class="plant-photo" src="${escapeHTML(p.photo||"")}" alt=""><div><div class="plant-row-name">${escapeHTML(p.name)}</div><div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div></div></div><div class="plant-row-quantity">${p.quantity}</div>`;
+    r.innerHTML = `<div class="plant-row-left"><img class="plant-photo" src="${escapeHTML(photoUrl)}" alt=""><div><div class="plant-row-name">${escapeHTML(p.name)}</div><div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div></div></div><div class="plant-row-quantity">${p.quantity}</div>`;
     r.onclick = () => { selectedPlantId = p.id; showScreen("move"); };
     c.appendChild(r);
   });
@@ -203,7 +215,8 @@ function renderInventory(){
 function renderSelectedPlant(){
   const p = inventory[selectedPlantId];
   if(!p){ showScreen("inventory"); return; }
-  document.getElementById("selectedPlantPhoto").src = p.photo || "";
+  const photoUrl = formatPhotoUrl(p.photo);
+  document.getElementById("selectedPlantPhoto").src = photoUrl;
   document.getElementById("selectedPlantPhoto").alt = p.name;
   document.getElementById("selectedPlantName").textContent = p.name;
   document.getElementById("selectedPlantMeta").textContent = `${p.id} · ${p.location}`;
