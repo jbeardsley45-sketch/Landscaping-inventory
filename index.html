@@ -3,119 +3,373 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Plant Inventory Beta</title>
-<script src="https://unpkg.com/html5-qrcode" defer></script>
+<title>Plant Inventory</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6f3;color:#263126}
-.app{max-width:600px;margin:0 auto;padding:16px}
-header{padding:10px 0 20px} header h1{margin:0;font-size:28px} header p{margin:5px 0 0;color:#687268}
-.tabs{display:flex;gap:8px;margin-bottom:16px}.tab{flex:1;padding:12px 8px;border:1px solid #ccd3cc;border-radius:8px;background:#fff;font-weight:bold;cursor:pointer}.tab.active{background:#dfe9dc;border-color:#9aae96}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #dfe4df}
-label{display:block;font-size:14px;font-weight:bold;margin-bottom:6px}
-input,select{box-sizing:border-box;width:100%;padding:12px;border:1px solid #cbd2cb;border-radius:8px;font-size:16px;margin-bottom:12px}
-button{min-height:44px;padding:10px 16px;border-radius:8px;border:1px solid #cbd2cb;background:#fff;font-size:15px;font-weight:bold;cursor:pointer}
-button.primary{background:#476b42;color:#fff;border-color:#476b42}button.danger{background:#fff5f3;border-color:#e0aaa2;color:#8b3328}
-button:active{transform:translateY(1px)}
-.lookup{display:flex;gap:8px}.lookup input{flex:1}.lookup button{flex-shrink:0}
-.plant-header{display:flex;justify-content:space-between;gap:20px;align-items:center}.plant-name{font-size:21px;font-weight:bold}.plant-meta{color:#687268;margin-top:4px}
-.quantity{text-align:right}.quantity-label{font-size:12px;color:#687268}.quantity-number{font-size:36px;font-weight:bold}
-.move-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.inventory-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid #dfe4df;border-radius:9px;margin-bottom:8px;cursor:pointer;gap:12px}.inventory-row:hover{background:#f7f9f6}
-.plant-row-left{display:flex;align-items:center;gap:12px;min-width:0}.plant-photo{width:58px;height:58px;object-fit:cover;border-radius:8px;border:1px solid #dfe4df;background:#eef2ed}.plant-row-name{font-weight:bold}.plant-row-meta{font-size:13px;color:#687268;margin-top:3px}.plant-row-quantity{font-size:20px;font-weight:bold}
-.move-photo{width:90px;height:90px;object-fit:cover;border-radius:10px;border:1px solid #dfe4df}.transaction{padding:12px;border-bottom:1px solid #e3e7e3}.transaction:last-child{border-bottom:none}.transaction-main{display:flex;justify-content:space-between}.transaction-meta{margin-top:4px;color:#687268;font-size:13px}.positive{color:#397238}.negative{color:#9a3c32}.hidden{display:none}.message{margin-top:10px;font-size:14px;color:#596359}.empty{color:#687268;padding:10px 0}
-.scan-box{margin-top:12px}.scan-status{padding:10px;border-radius:8px;background:#f1f5ef;margin-top:10px}.success{background:#e6f3e3;color:#285d28;font-weight:bold}.scanner-actions{display:flex;gap:8px;margin-top:10px}
-@media(max-width:400px){.app{padding:12px}.plant-header{align-items:flex-start}.quantity-number{font-size:30px}}
+body { margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f4f6f3; color:#263126; }
+.app { max-width:600px; margin:0 auto; padding:16px; }
+header { padding:10px 0 20px; } header h1 { margin:0; font-size:28px; } header p { margin:5px 0 0; color:#687268; }
+.tabs { display:flex; gap:8px; margin-bottom:16px; }
+.tab { flex:1; padding:12px 8px; border:1px solid #ccd3cc; border-radius:8px; background:#fff; font-weight:bold; text-align:center; cursor:pointer; }
+.tab.active { background:#dfe9dc; border-color:#9aae96; }
+.card { background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid #dfe4df; }
+label { display:block; font-size:14px; font-weight:bold; margin-bottom:6px; }
+input, select { box-sizing:border-box; width:100%; padding:12px; border:1px solid #cbd2cb; border-radius:8px; font-size:16px; margin-bottom:12px; }
+button { min-height:48px; padding:12px 16px; border-radius:8px; border:1px solid #cbd2cb; background:#fff; font-size:16px; font-weight:bold; cursor:pointer; width:100%; }
+button.primary { background:#476b42; color:#fff; border-color:#476b42; }
+button.danger { background:#fff5f3; border-color:#e0aaa2; color:#8b3328; }
+button:active { transform:scale(0.98); }
+.lookup { display:flex; gap:8px; margin-bottom:12px; } .lookup input { flex:1; margin-bottom:0; } .lookup button { width:auto; }
+.plant-header { display:flex; justify-content:space-between; gap:20px; align-items:center; }
+.plant-name { font-size:21px; font-weight:bold; } .plant-meta { color:#687268; margin-top:4px; }
+.quantity { text-align:right; } .quantity-label { font-size:12px; color:#687268; } .quantity-number { font-size:36px; font-weight:bold; }
+.move-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.inventory-row { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #dfe4df; border-radius:9px; margin-bottom:8px; cursor:pointer; gap:12px; }
+.inventory-row:hover { background:#f7f9f6; }
+.plant-row-left { display:flex; align-items:center; gap:12px; min-width:0; }
+.plant-photo { width:58px; height:58px; object-fit:cover; border-radius:8px; border:1px solid #dfe4df; background:#eef2ed; }
+.plant-row-name { font-weight:bold; } .plant-row-meta { font-size:13px; color:#687268; margin-top:3px; } .plant-row-quantity { font-size:20px; font-weight:bold; }
+.move-photo { width:90px; height:90px; object-fit:cover; border-radius:10px; border:1px solid #dfe4df; }
+.transaction { padding:12px; border-bottom:1px solid #e3e7e3; } .transaction:last-child { border-bottom:none; }
+.transaction-main { display:flex; justify-content:space-between; } .transaction-meta { margin-top:4px; color:#687268; font-size:13px; }
+.positive { color:#397238; } .negative { color:#9a3c32; } .hidden { display:none !important; }
+.message { margin-top:10px; font-size:14px; color:#596359; } .empty { color:#687268; padding:10px 0; }
+.scan-box { margin-top:12px; } .scan-status { padding:12px; border-radius:8px; background:#f1f5ef; margin-top:10px; font-size:14px; text-align:center; }
+.success { background:#e6f3e3; color:#285d28; font-weight:bold; }
+@media(max-width:400px){ .app { padding:12px; } }
 </style>
 </head>
 <body>
 <div class="app">
-<header><h1>Plant Inventory</h1><p>Landscape inventory management · QR Beta</p></header>
+<header>
+  <h1>Plant Inventory</h1>
+  <p>Landscape inventory management</p>
+</header>
+
 <div class="tabs">
-<button class="tab active" id="inventoryTab">Inventory</button>
-<button class="tab" id="moveTab">Move Plants</button>
-<button class="tab" id="historyTab">History</button>
+  <button class="tab active" id="inventoryTab">Inventory</button>
+  <button class="tab" id="moveTab">Move Plants</button>
+  <button class="tab" id="historyTab">History</button>
 </div>
 
 <section id="inventoryScreen">
-<div class="card">
-<label>Scan QR Code / Plant ID</label>
-<div class="lookup"><input id="plantLookup" placeholder="Example: P-001"><button class="primary" id="openPlantButton">Open</button></div>
-<button class="primary" id="scanButton" style="width:100%">📷 Scan Plant QR Code</button>
-<div id="scannerWrap" class="scan-box hidden"><div id="qr-reader" style="width:100%"></div><div class="scanner-actions"><button id="stopScanButton">Stop Scanner</button></div><div id="scanStatus" class="scan-status">Point the camera at a test QR code.</div></div>
-<div class="message">For testing, the QR codes in this ZIP contain P-001 through P-004.</div>
-</div>
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><strong>Current Inventory</strong><button id="addPlantButton">+ Plant</button></div><div id="inventoryList"></div></div>
+  <div class="card">
+    <label>Scan QR Code or Enter Plant ID</label>
+    <div class="lookup">
+      <input id="plantLookup" placeholder="e.g. P-001">
+      <button class="primary" id="openPlantButton">Open</button>
+    </div>
+    
+    <button class="primary" id="scanButton">📷 Scan QR Code with Camera</button>
+
+    <div id="scannerWrap" class="scan-box hidden">
+      <div id="qr-reader" style="width:100%"></div>
+      <button id="stopScanButton" style="margin-top:10px;">Cancel Camera</button>
+    </div>
+    <div id="scanStatus" class="scan-status hidden"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <strong>Current Inventory</strong>
+      <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Plant</button>
+    </div>
+    <div id="inventoryList"></div>
+  </div>
 </section>
 
 <section id="moveScreen" class="hidden">
-<div class="card">
-<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px"><img id="selectedPlantPhoto" class="move-photo" alt=""><div><div class="plant-name" id="selectedPlantName">Boxwood</div><div class="plant-meta" id="selectedPlantMeta">P-001 · Nursery A</div></div></div>
-<div class="plant-header"><div></div><div class="quantity"><div class="quantity-label">ON HAND</div><div class="quantity-number" id="selectedPlantQuantity">25</div></div></div>
-<br><label for="moveQuantity">Quantity</label><input id="moveQuantity" type="number" min="1" step="1" value="1">
-<div class="move-buttons"><button class="danger" id="removeButton">− Remove</button><button class="primary" id="addButton">+ Add</button></div>
-<div class="message" id="moveMessage"></div>
-</div>
-<div class="card"><strong>QR Code</strong><p class="message">A successful scan stops the camera, shows a confirmation, and automatically opens Move Plants with the scanned plant selected.</p></div>
+  <div class="card">
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">
+      <img id="selectedPlantPhoto" class="move-photo" alt="">
+      <div>
+        <div class="plant-name" id="selectedPlantName">---</div>
+        <div class="plant-meta" id="selectedPlantMeta">---</div>
+      </div>
+    </div>
+    <div class="plant-header">
+      <div></div>
+      <div class="quantity">
+        <div class="quantity-label">ON HAND</div>
+        <div class="quantity-number" id="selectedPlantQuantity">0</div>
+      </div>
+    </div>
+    <br>
+    <label for="moveQuantity">Quantity</label>
+    <input id="moveQuantity" type="number" min="1" step="1" value="1">
+    <div class="move-buttons">
+      <button class="danger" id="removeButton">− Remove</button>
+      <button class="primary" id="addButton">+ Add</button>
+    </div>
+    <div class="message" id="moveMessage"></div>
+  </div>
 </section>
 
-<section id="historyScreen" class="hidden"><div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Transaction History</strong><span class="message" id="transactionCount"></span></div><div id="historyList"></div></div></section>
+<section id="historyScreen" class="hidden">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+      <strong>Transaction History</strong>
+      <span class="message" id="transactionCount"></span>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</section>
 
 <section class="card hidden" id="addPlantForm">
-<h3 style="margin-top:0">Add Plant</h3>
-<label for="newPlantId">Plant ID</label><input id="newPlantId" placeholder="P-005">
-<label for="newPlantName">Plant Name</label><input id="newPlantName" placeholder="Red Maple">
-<label for="newPlantLocation">Storage Location</label><input id="newPlantLocation" placeholder="Nursery A">
-<label for="newPlantQuantity">Starting Quantity</label><input id="newPlantQuantity" type="number" min="0" step="1" placeholder="25">
-<label for="newPlantPhoto">Photo URL (optional)</label><input id="newPlantPhoto" placeholder="https://...">
-<div style="display:flex;gap:8px"><button id="cancelPlantButton">Cancel</button><button class="primary" id="savePlantButton">Save Plant</button></div>
-<div class="message" id="newPlantMessage"></div>
+  <h3 style="margin-top:0">Add Plant</h3>
+  <label for="newPlantId">Plant ID</label><input id="newPlantId" placeholder="P-005">
+  <label for="newPlantName">Plant Name</label><input id="newPlantName" placeholder="Red Maple">
+  <label for="newPlantLocation">Storage Location</label><input id="newPlantLocation" placeholder="Nursery A">
+  <label for="newPlantQuantity">Starting Quantity</label><input id="newPlantQuantity" type="number" min="0" step="1" placeholder="25">
+  <label for="newPlantPhoto">Photo URL (optional)</label><input id="newPlantPhoto" placeholder="https://...">
+  <div style="display:flex;gap:8px">
+    <button id="cancelPlantButton">Cancel</button>
+    <button class="primary" id="savePlantButton">Save Plant</button>
+  </div>
+  <div class="message" id="newPlantMessage"></div>
 </section>
 </div>
 
 <script>
 "use strict";
-const STORAGE_KEY="landscapePlantInventory";
-const PHOTO_BASE="./";
-const photoMap={"P-001":"boxwood.svg","P-002":"japanese-maple.svg","P-003":"arborvitae.svg","P-004":"lavender.svg"};
-function defaultInventory(){return {
-"P-001":{id:"P-001",name:"Boxwood",location:"Nursery A",quantity:25,photo:PHOTO_BASE+"boxwood.svg"},
-"P-002":{id:"P-002",name:"Japanese Maple",location:"Nursery A",quantity:12,photo:PHOTO_BASE+"japanese-maple.svg"},
-"P-003":{id:"P-003",name:"Green Giant Arborvitae",location:"Nursery B",quantity:40,photo:PHOTO_BASE+"arborvitae.svg"},
-"P-004":{id:"P-004",name:"Lavender",location:"Nursery B",quantity:60,photo:PHOTO_BASE+"lavender.svg"}}}
-function loadInventory(){
-const s=localStorage.getItem(STORAGE_KEY);
-let x;
-if(s){
-  x=JSON.parse(s);
-  Object.values(x).forEach(p=>{
-    if(!p.photo && photoMap[p.id]) p.photo=PHOTO_BASE+photoMap[p.id];
+
+// PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
+const GAS_API_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+let inventory = {}, selectedPlantId = "P-001", transactions = [];
+let html5QrCode = null;
+
+// Fetch data from Google Sheet via API
+function fetchSheetData() {
+  fetch(GAS_API_URL)
+    .then(res => res.json())
+    .then(data => {
+      if(data.error) throw new Error(data.error);
+      inventory = {};
+      data.plants.forEach(p => { inventory[p.id] = p; });
+      transactions = data.transactions;
+      renderInventory();
+      renderSelectedPlant();
+      renderHistory();
+    })
+    .catch(err => {
+      alert("Error connecting to Google Sheet: " + err.message);
+    });
+}
+
+// Send POST requests to Google Sheet API
+function sendApiRequest(payload, onSuccess, onError) {
+  fetch(GAS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) throw new Error(data.error);
+    onSuccess(data);
+  })
+  .catch(err => {
+    if (onError) onError(err);
+    else alert("Error: " + err.message);
   });
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(x));
-  return x;
 }
-x=defaultInventory();
-localStorage.setItem(STORAGE_KEY,JSON.stringify(x));
-return x;
+
+function escapeHTML(v){ return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+
+function showScreen(screen){
+  ["inventory","move","history"].forEach(s => {
+    document.getElementById(s+"Screen").classList.toggle("hidden", s !== screen);
+    document.getElementById(s+"Tab").classList.toggle("active", s === screen);
+  });
+  if(screen === "inventory") renderInventory();
+  if(screen === "move") renderSelectedPlant();
+  if(screen === "history") renderHistory();
+  window.scrollTo(0,0);
 }
-let inventory=loadInventory(),selectedPlantId="P-001";
-let transactions=JSON.parse(localStorage.getItem("plantTransactions")||"[]");
-function saveInventory(){localStorage.setItem(STORAGE_KEY,JSON.stringify(inventory))}
-function saveTransactions(){localStorage.setItem("plantTransactions",JSON.stringify(transactions))}
-function escapeHTML(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-function showScreen(screen){["inventory","move","history"].forEach(s=>{document.getElementById(s+"Screen").classList.toggle("hidden",s!==screen);document.getElementById(s+"Tab").classList.toggle("active",s===screen)});if(screen==="inventory")renderInventory();if(screen==="move")renderSelectedPlant();if(screen==="history")renderHistory();window.scrollTo(0,0)}
-function renderInventory(){const c=document.getElementById("inventoryList");c.innerHTML="";Object.values(inventory).forEach(p=>{const r=document.createElement("div");r.className="inventory-row";r.innerHTML=`<div class="plant-row-left"><img class="plant-photo" src="${escapeHTML(p.photo||"")}" alt=""><div><div class="plant-row-name">${escapeHTML(p.name)}</div><div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div></div></div><div class="plant-row-quantity">${p.quantity}</div>`;r.onclick=()=>{selectedPlantId=p.id;showScreen("move")};c.appendChild(r)})}
-function renderSelectedPlant(){const p=inventory[selectedPlantId];if(!p){showScreen("inventory");return}document.getElementById("selectedPlantPhoto").src=p.photo||"";document.getElementById("selectedPlantPhoto").alt=p.name;document.getElementById("selectedPlantName").textContent=p.name;document.getElementById("selectedPlantMeta").textContent=`${p.id} · ${p.location}`;document.getElementById("selectedPlantQuantity").textContent=p.quantity}
-function changeInventory(amount){const p=inventory[selectedPlantId],q=Number(document.getElementById("moveQuantity").value);if(!p)return;if(!Number.isInteger(q)||q<1){return showMoveMessage("Enter a whole number greater than zero.")}if(amount<0&&q>p.quantity)return showMoveMessage("You cannot remove more plants than are in inventory.");p.quantity+=amount*q;transactions.push({timestamp:new Date().toISOString(),plantId:p.id,plantName:p.name,action:amount>0?"Added":"Removed",quantity:q,balance:p.quantity});saveInventory();saveTransactions();renderSelectedPlant();showMoveMessage(`${amount>0?"Added":"Removed"} ${q}. New balance: ${p.quantity}`)}
-function showMoveMessage(m,success=false){const e=document.getElementById("moveMessage");e.textContent=m;e.className="message"+(success?" success":"")}
-function renderHistory(){const c=document.getElementById("historyList");document.getElementById("transactionCount").textContent=`${transactions.length} transactions`;c.innerHTML="";if(!transactions.length){c.innerHTML='<div class="empty">No transactions yet.</div>';return}transactions.slice().reverse().forEach(t=>{const d=new Date(t.timestamp),r=document.createElement("div");r.className="transaction";const add=t.action==="Added";r.innerHTML=`<div class="transaction-main"><strong>${escapeHTML(t.action)} ${t.quantity}</strong><strong class="${add?"positive":"negative"}">${add?"+":"-"}${t.quantity}</strong></div><div class="transaction-meta">${escapeHTML(t.plantName)} · ${escapeHTML(t.plantId)}</div><div class="transaction-meta">${d.toLocaleString()} · Balance: ${t.balance}</div>`;c.appendChild(r)})}
-function openPlant(){const id=document.getElementById("plantLookup").value.trim().toUpperCase();if(!inventory[id])return alert("Plant not found. Try P-001, P-002, P-003 or P-004.");selectedPlantId=id;showScreen("move")}
-function saveNewPlant(){const id=document.getElementById("newPlantId").value.trim().toUpperCase(),name=document.getElementById("newPlantName").value.trim(),location=document.getElementById("newPlantLocation").value.trim(),quantity=Number(document.getElementById("newPlantQuantity").value),photo=document.getElementById("newPlantPhoto").value.trim(),msg=document.getElementById("newPlantMessage");if(!id||!name||!location||!Number.isInteger(quantity)||quantity<0){msg.textContent="Please complete all fields.";return}if(inventory[id]){msg.textContent="That Plant ID already exists.";return}inventory[id]={id,name,location,quantity,photo};saveInventory();transactions.push({timestamp:new Date().toISOString(),plantId:id,plantName:name,action:"Starting inventory",quantity,balance:quantity});saveTransactions();selectedPlantId=id;closeNewPlantForm();renderInventory();showScreen("move")}
-function closeNewPlantForm(){document.getElementById("addPlantForm").classList.add("hidden");["newPlantId","newPlantName","newPlantLocation","newPlantQuantity","newPlantPhoto"].forEach(id=>document.getElementById(id).value="");document.getElementById("newPlantMessage").textContent=""}
-let scanner=null,scannerRunning=false;
-async function startScanner(){const wrap=document.getElementById("scannerWrap"),status=document.getElementById("scanStatus");wrap.classList.remove("hidden");status.className="scan-status";status.textContent="Starting camera…";if(typeof Html5Qrcode==="undefined"){status.textContent="Scanner library is still loading. Try again in a moment.";return}try{scanner=new Html5Qrcode("qr-reader");await scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:230,height:230}},onScanSuccess,()=>{});scannerRunning=true;status.textContent="Point the camera at a test QR code."}catch(e){status.textContent="Camera could not start. Check camera permission and use HTTPS."}}
-async function stopScanner(){if(scanner&&scannerRunning){try{await scanner.stop()}catch(e){}try{scanner.clear()}catch(e){}}scanner=null;scannerRunning=false;document.getElementById("scannerWrap").classList.add("hidden")}
-async function onScanSuccess(decodedText){const id=decodedText.trim().toUpperCase();if(!inventory[id]){document.getElementById("scanStatus").textContent=`Scanned "${decodedText}" — no matching plant.`;return}await stopScanner();selectedPlantId=id;showScreen("move");showMoveMessage(`✓ QR code scanned: ${id}`,true)}
-document.getElementById("inventoryTab").onclick=()=>showScreen("inventory");document.getElementById("moveTab").onclick=()=>showScreen("move");document.getElementById("historyTab").onclick=()=>showScreen("history");document.getElementById("openPlantButton").onclick=openPlant;document.getElementById("plantLookup").onkeydown=e=>{if(e.key==="Enter")openPlant()};document.getElementById("scanButton").onclick=startScanner;document.getElementById("stopScanButton").onclick=stopScanner;document.getElementById("addButton").onclick=()=>changeInventory(1);document.getElementById("removeButton").onclick=()=>changeInventory(-1);document.getElementById("addPlantButton").onclick=()=>document.getElementById("addPlantForm").classList.remove("hidden");document.getElementById("cancelPlantButton").onclick=closeNewPlantForm;document.getElementById("savePlantButton").onclick=saveNewPlant;
-renderInventory();renderSelectedPlant();renderHistory();
+
+function renderInventory(){
+  const c = document.getElementById("inventoryList");
+  c.innerHTML = "";
+  Object.values(inventory).forEach(p => {
+    const r = document.createElement("div");
+    r.className = "inventory-row";
+    r.innerHTML = `<div class="plant-row-left"><img class="plant-photo" src="${escapeHTML(p.photo||"")}" alt=""><div><div class="plant-row-name">${escapeHTML(p.name)}</div><div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div></div></div><div class="plant-row-quantity">${p.quantity}</div>`;
+    r.onclick = () => { selectedPlantId = p.id; showScreen("move"); };
+    c.appendChild(r);
+  });
+}
+
+function renderSelectedPlant(){
+  const p = inventory[selectedPlantId];
+  if(!p){ showScreen("inventory"); return; }
+  document.getElementById("selectedPlantPhoto").src = p.photo || "";
+  document.getElementById("selectedPlantPhoto").alt = p.name;
+  document.getElementById("selectedPlantName").textContent = p.name;
+  document.getElementById("selectedPlantMeta").textContent = `${p.id} · ${p.location}`;
+  document.getElementById("selectedPlantQuantity").textContent = p.quantity;
+}
+
+function changeInventory(amount){
+  const p = inventory[selectedPlantId], q = Number(document.getElementById("moveQuantity").value);
+  if(!p) return;
+  if(!Number.isInteger(q) || q < 1) return showMoveMessage("Enter a whole number greater than zero.");
+  if(amount < 0 && q > p.quantity) return showMoveMessage("You cannot remove more plants than are in inventory.");
+
+  const action = amount > 0 ? "Add" : "Remove";
+
+  sendApiRequest({
+    action: "updateInventory",
+    plantId: p.id,
+    inventoryAction: action,
+    changeQty: q
+  }, function(response) {
+    p.quantity = response.newQuantity;
+    transactions.unshift({
+      timestamp: response.timestamp,
+      plantId: p.id,
+      plantName: p.name,
+      action: action === "Add" ? "Added" : "Removed",
+      quantity: q,
+      balance: response.newQuantity
+    });
+    renderSelectedPlant();
+    showMoveMessage(`${action === "Add" ? "Added" : "Removed"} ${q}. New balance: ${p.quantity}`, true);
+  }, function(err) {
+    showMoveMessage("Failed to update Google Sheet: " + err.message);
+  });
+}
+
+function showMoveMessage(m, success = false){
+  const e = document.getElementById("moveMessage");
+  e.textContent = m;
+  e.className = "message" + (success ? " success" : "");
+}
+
+function renderHistory(){
+  const c = document.getElementById("historyList");
+  document.getElementById("transactionCount").textContent = `${transactions.length} transactions`;
+  c.innerHTML = "";
+  if(!transactions.length){ c.innerHTML = '<div class="empty">No transactions yet.</div>'; return; }
+  transactions.slice().reverse().forEach(t => {
+    const d = new Date(t.timestamp), r = document.createElement("div");
+    r.className = "transaction";
+    const add = t.action === "Added" || t.action === "Starting inventory";
+    r.innerHTML = `<div class="transaction-main"><strong>${escapeHTML(t.action)} ${t.quantity}</strong><strong class="${add ? "positive" : "negative"}">${add ? "+" : "-"}${t.quantity}</strong></div><div class="transaction-meta">${escapeHTML(t.plantName)} · ${escapeHTML(t.plantId)}</div><div class="transaction-meta">${d.toLocaleString()} · Balance: ${t.balance}</div>`;
+    c.appendChild(r);
+  });
+}
+
+function openPlant(){
+  const id = document.getElementById("plantLookup").value.trim().toUpperCase();
+  if(!inventory[id]) return alert("Plant not found in Google Sheets.");
+  selectedPlantId = id;
+  showScreen("move");
+}
+
+function saveNewPlant(){
+  const id = document.getElementById("newPlantId").value.trim().toUpperCase(),
+        name = document.getElementById("newPlantName").value.trim(),
+        location = document.getElementById("newPlantLocation").value.trim(),
+        quantity = Number(document.getElementById("newPlantQuantity").value),
+        photo = document.getElementById("newPlantPhoto").value.trim(),
+        msg = document.getElementById("newPlantMessage");
+
+  if(!id || !name || !location || !Number.isInteger(quantity) || quantity < 0){
+    msg.textContent = "Please complete all fields.";
+    return;
+  }
+  if(inventory[id]){
+    msg.textContent = "That Plant ID already exists.";
+    return;
+  }
+
+  sendApiRequest({
+    action: "addNewPlant",
+    id: id,
+    name: name,
+    location: location,
+    quantity: quantity,
+    photo: photo
+  }, function() {
+    inventory[id] = { id, name, location, quantity, photo };
+    selectedPlantId = id;
+    closeNewPlantForm();
+    renderInventory();
+    showScreen("move");
+  }, function(err) {
+    msg.textContent = "Error saving plant: " + err.message;
+  });
+}
+
+function closeNewPlantForm(){
+  document.getElementById("addPlantForm").classList.add("hidden");
+  ["newPlantId","newPlantName","newPlantLocation","newPlantQuantity","newPlantPhoto"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("newPlantMessage").textContent = "";
+}
+
+// Live WebRTC Camera Scanner (Works natively on GitHub Pages!)
+async function startScanner(){
+  const wrap = document.getElementById("scannerWrap");
+  const status = document.getElementById("scanStatus");
+  wrap.classList.remove("hidden");
+  status.classList.remove("hidden");
+  status.className = "scan-status";
+  status.textContent = "Starting camera…";
+
+  try {
+    html5QrCode = new Html5Qrcode("qr-reader");
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 220, height: 220 } },
+      onScanSuccess,
+      () => {}
+    );
+    status.textContent = "Point camera at a QR code.";
+  } catch(e) {
+    status.textContent = "Could not access camera. Make sure camera permissions are allowed.";
+    console.error(e);
+  }
+}
+
+async function stopScanner(){
+  if(html5QrCode){
+    try { await html5QrCode.stop(); } catch(e){}
+    try { html5QrCode.clear(); } catch(e){}
+  }
+  html5QrCode = null;
+  document.getElementById("scannerWrap").classList.add("hidden");
+}
+
+async function onScanSuccess(decodedText){
+  const id = decodedText.trim().toUpperCase();
+  const status = document.getElementById("scanStatus");
+  if(!inventory[id]){
+    status.classList.remove("hidden");
+    status.textContent = `Scanned "${decodedText}" — No matching Plant ID.`;
+    return;
+  }
+  await stopScanner();
+  status.classList.add("hidden");
+  selectedPlantId = id;
+  showScreen("move");
+  showMoveMessage(`✓ QR code scanned: ${id}`, true);
+}
+
+document.getElementById("inventoryTab").onclick = () => showScreen("inventory");
+document.getElementById("moveTab").onclick = () => showScreen("move");
+document.getElementById("historyTab").onclick = () => showScreen("history");
+document.getElementById("openPlantButton").onclick = openPlant;
+document.getElementById("plantLookup").onkeydown = e => { if(e.key === "Enter") openPlant(); };
+document.getElementById("scanButton").onclick = startScanner;
+document.getElementById("stopScanButton").onclick = stopScanner;
+document.getElementById("addButton").onclick = () => changeInventory(1);
+document.getElementById("removeButton").onclick = () => changeInventory(-1);
+document.getElementById("addPlantButton").onclick = () => document.getElementById("addPlantForm").classList.remove("hidden");
+document.getElementById("cancelPlantButton").onclick = closeNewPlantForm;
+document.getElementById("savePlantButton").onclick = saveNewPlant;
+
+fetchSheetData();
 </script>
-</body></html>
+</body>
+</html>
