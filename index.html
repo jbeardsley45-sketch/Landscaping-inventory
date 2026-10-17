@@ -25,7 +25,7 @@ button:active { transform:scale(0.98); }
 .lookup { display:flex; gap:8px; margin-bottom:12px; } .lookup input { flex:1; margin-bottom:0; } .lookup button { width:auto; }
 .plant-header { display:flex; justify-content:space-between; gap:20px; align-items:center; }
 .plant-name { font-size:21px; font-weight:bold; } .plant-meta { color:#687268; margin-top:4px; }
-.plant-description { color:#4a544a; font-size:14px; margin-top:10px; line-height:1.4; background:#f7f9f6; padding:10px; border-radius:8px; border:1px solid #e5ebe4; }
+.plant-description { color:#4a544a; font-size:14px; margin-top:10px; line-height:1.4; background:#f7f9f6; padding:10px; border-radius:8px; border:1px solid #e5ebe4; white-space:pre-line; }
 .quantity { text-align:right; } .quantity-label { font-size:12px; color:#687268; } .quantity-number { font-size:36px; font-weight:bold; }
 .move-buttons { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .inventory-row { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid #dfe4df; border-radius:9px; margin-bottom:8px; cursor:pointer; gap:12px; }
@@ -196,49 +196,17 @@ function searchGoogleImages(plantName) {
   window.open(`https://www.google.com/search?q=${query}&tbm=isch&udm=2`, '_blank');
 }
 
-// Dynamic In-App Photo Gallery using Unsplash Search API
+// Fast In-App Photo Gallery with Full-Screen Tap Preview
 function openInAppGallery(plantName) {
   const modal = document.getElementById("imageGalleryModal");
   const title = document.getElementById("galleryTitle");
   const grid = document.getElementById("galleryGrid");
   
   title.textContent = `Photos: ${plantName}`;
-  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Loading plant photos...</div>`;
+  grid.innerHTML = "";
   modal.classList.remove("hidden");
 
-  // Format search query specifically for plant/botanical photos
-  const cleanName = encodeURIComponent(plantName.replace(/[^a-zA-Z0-9\s]/g, '').trim() + " plant");
-  
-  // Query Unsplash Source API for dynamic topic photos
-  fetch(`https://source.unsplash.com/featured/400x300/?${cleanName}`)
-    .then(() => {
-      grid.innerHTML = "";
-      // Render 6 dynamic photos based on the plant name
-      for (let i = 1; i <= 6; i++) {
-        const imgContainer = document.createElement("div");
-        imgContainer.style.cssText = "background:#eef2ed; border-radius:8px; height:140px; overflow:hidden; cursor:pointer; position:relative;";
-        
-        // Dynamically fetched botanical photo URL
-        const imgUrl = `https://source.unsplash.com/featured/800x600/?${cleanName}&sig=${i}`;
-        
-        const img = document.createElement("img");
-        img.src = imgUrl;
-        img.alt = plantName;
-        img.style.cssText = "width:100%; height:100%; object-fit:cover;";
-        
-        // Tap image to open full-screen preview
-        imgContainer.onclick = () => openImagePreview(imgUrl, `${plantName} - Sample ${i}`);
-        
-        imgContainer.appendChild(img);
-        grid.appendChild(imgContainer);
-      }
-    })
-    .catch(() => {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
-    });
-}
-
-  // Render 6 fast CDN thumbnails
+  // Render 6 fast CDN thumbnails using Unsplash botanical placeholders
   for (let i = 1; i <= 6; i++) {
     const imgContainer = document.createElement("div");
     imgContainer.style.cssText = "background:#eef2ed; border-radius:8px; height:140px; overflow:hidden; cursor:pointer; position:relative;";
@@ -486,54 +454,4 @@ async function startScanner(){
     await html5QrCode.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 220, height: 220 } },
-      onScanSuccess,
-      () => {}
-    );
-    status.textContent = "Point camera at a QR code.";
-  } catch(e) {
-    status.textContent = "Could not access camera. Make sure camera permissions are allowed.";
-    console.error(e);
-  }
-}
-
-async function stopScanner(){
-  if(html5QrCode){
-    try { await html5QrCode.stop(); } catch(e){}
-    try { html5QrCode.clear(); } catch(e){}
-  }
-  html5QrCode = null;
-  document.getElementById("scannerWrap").classList.add("hidden");
-}
-
-async function onScanSuccess(decodedText){
-  const id = decodedText.trim().toUpperCase();
-  const status = document.getElementById("scanStatus");
-  if(!inventory[id]){
-    status.classList.remove("hidden");
-    status.textContent = `Scanned "${decodedText}" — No matching Plant ID.`;
-    return;
-  }
-  await stopScanner();
-  status.classList.add("hidden");
-  selectedPlantId = id;
-  showScreen("move");
-  showMoveMessage(`✓ QR code scanned: ${id}`, true);
-}
-
-document.getElementById("inventoryTab").onclick = () => showScreen("inventory");
-document.getElementById("moveTab").onclick = () => showScreen("move");
-document.getElementById("historyTab").onclick = () => showScreen("history");
-document.getElementById("openPlantButton").onclick = openPlant;
-document.getElementById("plantLookup").onkeydown = e => { if(e.key === "Enter") openPlant(); };
-document.getElementById("scanButton").onclick = startScanner;
-document.getElementById("stopScanButton").onclick = stopScanner;
-document.getElementById("addButton").onclick = () => changeInventory(1);
-document.getElementById("removeButton").onclick = () => changeInventory(-1);
-document.getElementById("addPlantButton").onclick = () => document.getElementById("addPlantForm").classList.remove("hidden");
-document.getElementById("cancelPlantButton").onclick = closeNewPlantForm;
-document.getElementById("savePlantButton").onclick = saveNewPlant;
-
-fetchSheetData();
-</script>
-</body>
-</html>
+      onScan
