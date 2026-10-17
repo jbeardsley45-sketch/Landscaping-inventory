@@ -61,7 +61,17 @@ button:active { transform:scale(0.98); }
   <button class="tab" id="moveTab">Move Plants</button>
   <button class="tab" id="historyTab">History</button>
 </div>
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <strong>Current Inventory</strong>
+      <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Plant</button>
+    </div>
+    
+    <!-- Live Search Filter Input -->
+    <input id="inventorySearch" placeholder="🔍 Search inventory by name or ID..." style="margin-bottom:12px;" oninput="filterInventory()">
 
+    <div id="inventoryList"></div>
+  </div>
 <section id="inventoryScreen">
   <div class="card">
     <label>Scan QR Code or Enter Plant ID</label>
@@ -323,10 +333,33 @@ function showScreen(screen){
   window.scrollTo(0,0);
 }
 
+let currentSearchQuery = "";
+
+function filterInventory() {
+  currentSearchQuery = document.getElementById("inventorySearch").value.toLowerCase().trim();
+  renderInventory();
+}
+
 function renderInventory(){
   const c = document.getElementById("inventoryList");
   c.innerHTML = "";
-  Object.values(inventory).forEach(p => {
+  
+  // Filter inventory items based on search query matching name, ID, or location
+  const filteredPlants = Object.values(inventory).filter(p => {
+    if (!currentSearchQuery) return true;
+    return (
+      (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
+      (p.id && p.id.toLowerCase().includes(currentSearchQuery)) ||
+      (p.location && p.location.toLowerCase().includes(currentSearchQuery))
+    );
+  });
+
+  if (filteredPlants.length === 0) {
+    c.innerHTML = '<div class="empty" style="text-align:center; padding:20px;">No matching plants found.</div>';
+    return;
+  }
+
+  filteredPlants.forEach(p => {
     const photoUrl = formatPhotoUrl(p.photo);
     const descriptionText = p.description ? escapeHTML(p.description) : "";
     
@@ -350,7 +383,6 @@ function renderInventory(){
     c.appendChild(r);
   });
 }
-
 function renderSelectedPlant(){
   const p = inventory[selectedPlantId];
   if(!p){ showScreen("inventory"); return; }
