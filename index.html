@@ -196,15 +196,47 @@ function searchGoogleImages(plantName) {
   window.open(`https://www.google.com/search?q=${query}&tbm=isch&udm=2`, '_blank');
 }
 
-// Fast In-App Photo Gallery with Full-Screen Tap Preview
+// Dynamic In-App Photo Gallery using Unsplash Search API
 function openInAppGallery(plantName) {
   const modal = document.getElementById("imageGalleryModal");
   const title = document.getElementById("galleryTitle");
   const grid = document.getElementById("galleryGrid");
   
   title.textContent = `Photos: ${plantName}`;
-  grid.innerHTML = "";
+  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Loading plant photos...</div>`;
   modal.classList.remove("hidden");
+
+  // Format search query specifically for plant/botanical photos
+  const cleanName = encodeURIComponent(plantName.replace(/[^a-zA-Z0-9\s]/g, '').trim() + " plant");
+  
+  // Query Unsplash Source API for dynamic topic photos
+  fetch(`https://source.unsplash.com/featured/400x300/?${cleanName}`)
+    .then(() => {
+      grid.innerHTML = "";
+      // Render 6 dynamic photos based on the plant name
+      for (let i = 1; i <= 6; i++) {
+        const imgContainer = document.createElement("div");
+        imgContainer.style.cssText = "background:#eef2ed; border-radius:8px; height:140px; overflow:hidden; cursor:pointer; position:relative;";
+        
+        // Dynamically fetched botanical photo URL
+        const imgUrl = `https://source.unsplash.com/featured/800x600/?${cleanName}&sig=${i}`;
+        
+        const img = document.createElement("img");
+        img.src = imgUrl;
+        img.alt = plantName;
+        img.style.cssText = "width:100%; height:100%; object-fit:cover;";
+        
+        // Tap image to open full-screen preview
+        imgContainer.onclick = () => openImagePreview(imgUrl, `${plantName} - Sample ${i}`);
+        
+        imgContainer.appendChild(img);
+        grid.appendChild(imgContainer);
+      }
+    })
+    .catch(() => {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
+    });
+}
 
   // Render 6 fast CDN thumbnails
   for (let i = 1; i <= 6; i++) {
