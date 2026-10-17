@@ -101,10 +101,11 @@ button:active { transform:scale(0.98); }
     <!-- Description Block -->
     <div class="plant-description" id="selectedPlantDescription">No description provided.</div>
     
-    <!-- Google Image Search Button -->
-    <button class="secondary" id="googleSearchButton" style="margin-top:12px; margin-bottom:14px;">
-      🔍 Search Images on Google
-    </button>
+    <!-- Action Buttons for Photos -->
+    <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:14px;">
+      <button class="secondary" id="inAppGalleryButton" style="flex:1;">🖼 Open Photo Gallery</button>
+      <button class="secondary" id="googleSearchButton" style="flex:1;">🔍 Search Google Images</button>
+    </div>
 
     <div class="plant-header">
       <div></div>
@@ -146,21 +147,49 @@ button:active { transform:scale(0.98); }
     <button id="cancelPlantButton">Cancel</button>
     <button class="primary" id="savePlantButton">Save Plant</button>
   </div>
-     <div class="message" id="newPlantMessage"></div>
-  </section>
+  <div class="message" id="newPlantMessage"></div>
+</section>
 
-  <!-- In-App Image Gallery Modal -->
- <div id="imageGalleryModal" class="card hidden" style="position:fixed; top:5%; left:50%; transform:translateX(-50%); width:90%; max-width:500px; max-height:85vh; z-index:1000; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <strong id="galleryTitle">Plant Gallery</strong>
-      <button onclick="closeGallery()" style="width:auto; min-height:30px; padding:4px 10px;">✕ Close</button>
-    </div>
-    <div id="galleryGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+<!-- In-App Image Gallery Modal -->
+<div id="imageGalleryModal" class="card hidden" style="position:fixed; top:5%; left:50%; transform:translateX(-50%); width:90%; max-width:500px; max-height:85vh; z-index:1000; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <strong id="galleryTitle">Plant Gallery</strong>
+    <button onclick="closeGallery()" style="width:auto; min-height:30px; padding:4px 10px;">✕ Close</button>
   </div>
+  <div id="galleryGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+</div>
+
 </div><!-- .app -->
 
 <script>
-  // Fetches clean botanical photos via Wikimedia Commons
+"use strict";
+function formatPhotoUrl(url) {
+  if (!url) return '';
+  url = url.trim();
+
+  const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|lh3\.googleusercontent\.com\/d\/)([a-zA-Z0-9_-]+)/);
+  if (driveMatch && driveMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+  }
+
+  return url;
+}
+
+// PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyun8UxWmO0pXjN4cE5pDIBV0K6HeQAPRTIEf1KV3SETYCbe9-YOtpCisa4RHylySQx2g/exec";
+
+let inventory = {}, selectedPlantId = "P-001", transactions = [];
+let html5QrCode = null;
+
+// Clean Google Image Search link
+function searchGoogleImages(plantName) {
+  if (!plantName) return;
+  const cleanName = plantName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+  const query = encodeURIComponent(`${cleanName} plant -buy -shop -price -store`);
+  window.open(`https://www.google.com/search?q=${query}&tbm=isch&udm=2`, '_blank');
+}
+
+// In-App Wikimedia Gallery Modal
 function openInAppGallery(plantName) {
   const modal = document.getElementById("imageGalleryModal");
   const title = document.getElementById("galleryTitle");
@@ -176,7 +205,7 @@ function openInAppGallery(plantName) {
     .then(data => {
       grid.innerHTML = "";
       if (!data.query || !data.query.pages) {
-        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No images found. <br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search on Google Instead</button></div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No images found.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search on Google Instead</button></div>`;
         return;
       }
       
@@ -197,31 +226,6 @@ function openInAppGallery(plantName) {
 
 function closeGallery() {
   document.getElementById("imageGalleryModal").classList.add("hidden");
-}
-"use strict";
-function formatPhotoUrl(url) {
-  if (!url) return '';
-  url = url.trim();
-
-  const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|lh3\.googleusercontent\.com\/d\/)([a-zA-Z0-9_-]+)/);
-  if (driveMatch && driveMatch[1]) {
-    return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
-  }
-
-  return url;
-}
-
-// PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyun8UxWmO0pXjN4cE5pDIBV0K6HeQAPRTIEf1KV3SETYCbe9-YOtpCisa4RHylySQx2g/exec";
-
-let inventory = {}, selectedPlantId = "P-001", transactions = [];
-let html5QrCode = null;
-
-// Helper to open Google Image Search in a new tab
-function searchGoogleImages(plantName) {
-  if (!plantName) return;
-  const query = encodeURIComponent(plantName + " plant");
-  window.open(`https://www.google.com/search?tbm=isch&q=${query}`, '_blank');
 }
 
 // Fetch data from Google Sheet via API
@@ -311,11 +315,12 @@ function renderSelectedPlant(){
   document.getElementById("selectedPlantMeta").textContent = `${p.id} · ${p.location}`;
   document.getElementById("selectedPlantQuantity").textContent = p.quantity;
   
-  // Set Description & Google Search Button Listener
+  // Set Description & Button Action Listeners
   const descEl = document.getElementById("selectedPlantDescription");
   descEl.textContent = p.description || "No description provided.";
   
   document.getElementById("googleSearchButton").onclick = () => searchGoogleImages(p.name);
+  document.getElementById("inAppGalleryButton").onclick = () => openInAppGallery(p.name);
 }
 
 function changeInventory(amount){
