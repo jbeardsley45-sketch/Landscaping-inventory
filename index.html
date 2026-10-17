@@ -454,4 +454,54 @@ async function startScanner(){
     await html5QrCode.start(
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 220, height: 220 } },
-      onScan
+      onScanSuccess,
+      () => {}
+    );
+    status.textContent = "Point camera at a QR code.";
+  } catch(e) {
+    status.textContent = "Could not access camera. Make sure camera permissions are allowed.";
+    console.error(e);
+  }
+}
+
+async function stopScanner(){
+  if(html5QrCode){
+    try { await html5QrCode.stop(); } catch(e){}
+    try { html5QrCode.clear(); } catch(e){}
+  }
+  html5QrCode = null;
+  document.getElementById("scannerWrap").classList.add("hidden");
+}
+
+async function onScanSuccess(decodedText){
+  const id = decodedText.trim().toUpperCase();
+  const status = document.getElementById("scanStatus");
+  if(!inventory[id]){
+    status.classList.remove("hidden");
+    status.textContent = `Scanned "${decodedText}" — No matching Plant ID.`;
+    return;
+  }
+  await stopScanner();
+  status.classList.add("hidden");
+  selectedPlantId = id;
+  showScreen("move");
+  showMoveMessage(`✓ QR code scanned: ${id}`, true);
+}
+
+document.getElementById("inventoryTab").onclick = () => showScreen("inventory");
+document.getElementById("moveTab").onclick = () => showScreen("move");
+document.getElementById("historyTab").onclick = () => showScreen("history");
+document.getElementById("openPlantButton").onclick = openPlant;
+document.getElementById("plantLookup").onkeydown = e => { if(e.key === "Enter") openPlant(); };
+document.getElementById("scanButton").onclick = startScanner;
+document.getElementById("stopScanButton").onclick = stopScanner;
+document.getElementById("addButton").onclick = () => changeInventory(1);
+document.getElementById("removeButton").onclick = () => changeInventory(-1);
+document.getElementById("addPlantButton").onclick = () => document.getElementById("addPlantForm").classList.remove("hidden");
+document.getElementById("cancelPlantButton").onclick = closeNewPlantForm;
+document.getElementById("savePlantButton").onclick = saveNewPlant;
+
+fetchSheetData();
+</script>
+</body>
+</html>
