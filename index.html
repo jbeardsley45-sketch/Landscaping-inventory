@@ -73,6 +73,7 @@ button:active { transform:scale(0.98); }
     <div id="inventoryList"></div>
   </div>
 <section id="inventoryScreen">
+  <!-- 1. Scanner & Quick Lookup Card (Moved to Top) -->
   <div class="card">
     <label>Scan QR Code or Enter Plant ID</label>
     <div class="lookup">
@@ -89,11 +90,16 @@ button:active { transform:scale(0.98); }
     <div id="scanStatus" class="scan-status hidden"></div>
   </div>
 
+  <!-- 2. Inventory List & Search Card -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <strong>Current Inventory</strong>
       <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Plant</button>
     </div>
+    
+    <!-- Live Search Filter Input -->
+    <input id="inventorySearch" placeholder="🔍 Search inventory by name or ID..." style="margin-bottom:12px;" oninput="filterInventory()">
+
     <div id="inventoryList"></div>
   </div>
 </section>
