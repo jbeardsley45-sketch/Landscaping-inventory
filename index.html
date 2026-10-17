@@ -146,11 +146,58 @@ button:active { transform:scale(0.98); }
     <button id="cancelPlantButton">Cancel</button>
     <button class="primary" id="savePlantButton">Save Plant</button>
   </div>
-  <div class="message" id="newPlantMessage"></div>
-</section>
-</div>
+     <div class="message" id="newPlantMessage"></div>
+  </section>
+
+  <!-- In-App Image Gallery Modal -->
+ <div id="imageGalleryModal" class="card hidden" style="position:fixed; top:5%; left:50%; transform:translateX(-50%); width:90%; max-width:500px; max-height:85vh; z-index:1000; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <strong id="galleryTitle">Plant Gallery</strong>
+      <button onclick="closeGallery()" style="width:auto; min-height:30px; padding:4px 10px;">✕ Close</button>
+    </div>
+    <div id="galleryGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+  </div>
+</div><!-- .app -->
 
 <script>
+  // Fetches clean botanical photos via Wikimedia Commons
+function openInAppGallery(plantName) {
+  const modal = document.getElementById("imageGalleryModal");
+  const title = document.getElementById("galleryTitle");
+  const grid = document.getElementById("galleryGrid");
+  
+  title.textContent = `Photos: ${plantName}`;
+  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Loading images...</div>`;
+  modal.classList.remove("hidden");
+
+  const query = encodeURIComponent(plantName);
+  fetch(`https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrnamespace=6&ns=6&gsrlimit=8&prop=imageinfo&iiprop=url&format=json&origin=*`)
+    .then(res => res.json())
+    .then(data => {
+      grid.innerHTML = "";
+      if (!data.query || !data.query.pages) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No images found. <br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search on Google Instead</button></div>`;
+        return;
+      }
+      
+      Object.values(data.query.pages).forEach(page => {
+        if (page.imageinfo && page.imageinfo[0]) {
+          const imgUrl = page.imageinfo[0].url;
+          const img = document.createElement("img");
+          img.src = imgUrl;
+          img.style.cssText = "width:100%; height:140px; object-fit:cover; border-radius:8px; border:1px solid #dfe4df;";
+          grid.appendChild(img);
+        }
+      });
+    })
+    .catch(() => {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center;">Failed to load gallery.</div>`;
+    });
+}
+
+function closeGallery() {
+  document.getElementById("imageGalleryModal").classList.add("hidden");
+}
 "use strict";
 function formatPhotoUrl(url) {
   if (!url) return '';
