@@ -4,14 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Plant Inventory</title>
+
+<!-- Favicon & iOS Home Screen Icon -->
 <link rel="icon" type="image/png" sizes="32x32" href="./tree-icon.png?v=2">
+<link rel="apple-touch-icon" href="./tree-icon.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Plant Inventory">
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 body { margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f4f6f3; color:#263126; }
 .app { max-width:600px; margin:0 auto; padding:16px; }
 header { padding:10px 0 20px; } header h1 { margin:0; font-size:28px; } header p { margin:5px 0 0; color:#687268; }
-.tabs { display:flex; gap:8px; margin-bottom:16px; }
-.tab { flex:1; padding:12px 8px; border:1px solid #ccd3cc; border-radius:8px; background:#fff; font-weight:bold; text-align:center; cursor:pointer; }
+.tabs { display:flex; gap:6px; margin-bottom:16px; }
+.tab { flex:1; padding:12px 6px; border:1px solid #ccd3cc; border-radius:8px; background:#fff; font-weight:bold; text-align:center; cursor:pointer; font-size:14px; }
 .tab.active { background:#dfe9dc; border-color:#9aae96; }
 .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid #dfe4df; }
 label { display:block; font-size:14px; font-weight:bold; margin-bottom:6px; }
@@ -46,7 +53,7 @@ button:active { transform:scale(0.98); }
 .message { margin-top:10px; font-size:14px; color:#596359; } .empty { color:#687268; padding:10px 0; }
 .scan-box { margin-top:12px; } .scan-status { padding:12px; border-radius:8px; background:#f1f5ef; margin-top:10px; font-size:14px; text-align:center; }
 .success { background:#e6f3e3; color:#285d28; font-weight:bold; }
-@media(max-width:400px){ .app { padding:12px; } .plant-row-desc { max-width:140px; } }
+@media(max-width:400px){ .app { padding:12px; } .plant-row-desc { max-width:140px; } .tab { padding:10px 4px; font-size:12px; } }
 </style>
 </head>
 <body>
@@ -59,11 +66,13 @@ button:active { transform:scale(0.98); }
 <div class="tabs">
   <button class="tab active" id="inventoryTab">Inventory</button>
   <button class="tab" id="moveTab">Move Plants</button>
+  <button class="tab" id="pickTicketsTab">Pick Tickets</button>
   <button class="tab" id="historyTab">History</button>
 </div>
 
+<!-- INVENTORY SCREEN -->
 <section id="inventoryScreen">
-  <!-- 1. Scanner & Quick Lookup Card (Moved to Top) -->
+  <!-- Scanner Card (Positioned Above Inventory List) -->
   <div class="card">
     <label>Scan QR Code or Enter Plant ID</label>
     <div class="lookup">
@@ -80,20 +89,21 @@ button:active { transform:scale(0.98); }
     <div id="scanStatus" class="scan-status hidden"></div>
   </div>
 
-  <!-- 2. Inventory List & Search Card -->
+  <!-- Current Inventory Card -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <strong>Current Inventory</strong>
       <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Plant</button>
     </div>
     
-    <!-- Live Search Filter Input -->
+    <!-- Real-time Live Search Input -->
     <input id="inventorySearch" placeholder="🔍 Search inventory by name or ID..." style="margin-bottom:12px;" oninput="filterInventory()">
 
     <div id="inventoryList"></div>
   </div>
 </section>
-  
+
+<!-- MOVE PLANTS SCREEN -->
 <section id="moveScreen" class="hidden">
   <div class="card">
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
@@ -131,6 +141,25 @@ button:active { transform:scale(0.98); }
   </div>
 </section>
 
+<!-- PICK TICKETS SCREEN -->
+<section id="pickTicketsScreen" class="hidden">
+  <div class="card">
+    <label for="pickTicketSelect">Select Job / Pick Sheet</label>
+    <select id="pickTicketSelect" onchange="renderSelectedPickTicket()">
+      <option value="">-- Choose Pick Sheet --</option>
+    </select>
+  </div>
+
+  <div class="card hidden" id="pickTicketDetailsCard">
+    <h3 id="pickTicketTitle" style="margin-top:0">Job Items</h3>
+    <div id="pickTicketList"></div>
+    <br>
+    <button class="primary" id="savePickTicketButton" onclick="submitPickTicket()">Submit Picked Quantities</button>
+    <div class="message" id="pickTicketMessage"></div>
+  </div>
+</section>
+
+<!-- HISTORY SCREEN -->
 <section id="historyScreen" class="hidden">
   <div class="card">
     <div style="display:flex;justify-content:space-between;margin-bottom:10px">
@@ -141,6 +170,7 @@ button:active { transform:scale(0.98); }
   </div>
 </section>
 
+<!-- ADD PLANT FORM -->
 <section class="card hidden" id="addPlantForm">
   <h3 style="margin-top:0">Add Plant</h3>
   <label for="newPlantId">Plant ID</label><input id="newPlantId" placeholder="P-005">
@@ -191,67 +221,100 @@ function formatPhotoUrl(url) {
 // PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyun8UxWmO0pXjN4cE5pDIBV0K6HeQAPRTIEf1KV3SETYCbe9-YOtpCisa4RHylySQx2g/exec";
 
-let inventory = {}, selectedPlantId = "P-001", transactions = [];
+let inventory = {}, selectedPlantId = "P-001", transactions = [], pickTickets = [];
+let currentSearchQuery = "";
 let html5QrCode = null;
 
-// Clean Google Image Search link
+// Cleaned Google Image Search Link (removes sponsored / shopping artifacts)
 function searchGoogleImages(plantName) {
   if (!plantName) return;
-  const cleanName = plantName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
-  const query = encodeURIComponent(`${cleanName} plant -buy -shop -price -store`);
+  const cleanName = plantName.replace(/['"]/g, '').trim();
+  const query = encodeURIComponent(`${cleanName} plant botanical foliage -buy -shop -store -price -sponsored`);
   window.open(`https://www.google.com/search?q=${query}&tbm=isch&udm=2`, '_blank');
 }
 
-// Dynamically fetch real photos of the specific plant using Wikimedia Commons API
+// Dynamic Wikipedia & Wikimedia Plant Photo Gallery
 async function openInAppGallery(plantName) {
   const modal = document.getElementById("imageGalleryModal");
   const title = document.getElementById("galleryTitle");
   const grid = document.getElementById("galleryGrid");
   
   title.textContent = `Photos: ${plantName}`;
-  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#555;">Searching photos of ${plantName}...</div>`;
+  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#555;">Searching real photos of ${plantName}...</div>`;
   modal.classList.remove("hidden");
 
   try {
-    // Clean up plant name for search (remove cultivator quotes or extra words if needed)
-    const cleanSearchTerm = plantName.replace(/['"]/g, "").trim();
+    const cleanName = plantName.replace(/['"]/g, "").trim();
     
-    // Query Wikimedia API for images matching the exact plant name
-    const searchUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanSearchTerm)}&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url|size&format=json&origin=*`;
+    // Search Wikipedia/Wikimedia for exact plant page
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanName)}&format=json&origin=*`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
     
-    const response = await fetch(searchUrl);
-    const data = await response.json();
+    let imageUrls = [];
+    
+    if (searchData.query && searchData.query.search.length > 0) {
+      const pageTitle = searchData.query.search[0].title;
+      
+      const imagesUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=images&imlimit=20&format=json&origin=*`;
+      const imgRes = await fetch(imagesUrl);
+      const imgData = await imgRes.json();
+      
+      const pages = imgData.query.pages;
+      const pageId = Object.keys(pages)[0];
+      
+      if (pages[pageId] && pages[pageId].images) {
+        const fileTitles = pages[pageId].images
+          .map(img => img.title)
+          .filter(title => /\.(jpg|jpeg|png)$/i.test(title))
+          .slice(0, 10);
+          
+        if (fileTitles.length > 0) {
+          const detailsUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(fileTitles.join('|'))}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+          const detailsRes = await fetch(detailsUrl);
+          const detailsData = await detailsRes.json();
+          
+          const detailPages = detailsData.query.pages;
+          Object.values(detailPages).forEach(p => {
+            if (p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url) {
+              imageUrls.push(p.imageinfo[0].url);
+            }
+          });
+        }
+      }
+    }
+    
+    if (imageUrls.length === 0) {
+      const commonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanName)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url&format=json&origin=*`;
+      const commonsRes = await fetch(commonsUrl);
+      const commonsData = await commonsRes.json();
+      
+      if (commonsData.query && commonsData.query.pages) {
+        Object.values(commonsData.query.pages).forEach(p => {
+          if (p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url) {
+            imageUrls.push(p.imageinfo[0].url);
+          }
+        });
+      }
+    }
     
     grid.innerHTML = "";
     
-    if (!data.query || !data.query.pages) {
+    if (imageUrls.length === 0) {
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No specific photos found for "${plantName}".<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images Instead</button></div>`;
       return;
     }
     
-    const pages = Object.values(data.query.pages);
-    const validImages = pages.filter(p => p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url);
-    
-    if (validImages.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No images found. Try searching Google Images.</div>`;
-      return;
-    }
-    
-    // Render up to 6 real photos found for this specific plant
-    validImages.slice(0, 6).forEach((page, idx) => {
-      const imgUrl = page.imageinfo[0].url;
-      
+    imageUrls.slice(0, 6).forEach((imgUrl, idx) => {
       const imgContainer = document.createElement("div");
       imgContainer.style.cssText = "background:#eef2ed; border-radius:8px; height:140px; overflow:hidden; cursor:pointer; position:relative;";
       
       const img = document.createElement("img");
       img.src = imgUrl;
-      img.alt = plantName;
+      img.alt = `${plantName} photo ${idx + 1}`;
       img.style.cssText = "width:100%; height:100%; object-fit:cover;";
       
-      // Tap image to open full-screen preview
       imgContainer.onclick = () => openImagePreview(imgUrl, `${plantName} - Photo ${idx + 1}`);
-      
       imgContainer.appendChild(img);
       grid.appendChild(imgContainer);
     });
@@ -261,11 +324,11 @@ async function openInAppGallery(plantName) {
     grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
   }
 }
+
 function closeGallery() {
   document.getElementById("imageGalleryModal").classList.add("hidden");
 }
 
-// Full-screen image preview handlers
 function openImagePreview(src, caption) {
   const previewModal = document.getElementById("imagePreviewModal");
   const previewImg = document.getElementById("fullScreenPreviewImg");
@@ -280,7 +343,7 @@ function closeImagePreview() {
   document.getElementById("imagePreviewModal").classList.add("hidden");
 }
 
-// Fetch data from Google Sheet via API
+// Fetch Sheet Data (Plants, Pick Tickets, and Transactions)
 function fetchSheetData() {
   fetch(GAS_API_URL)
     .then(res => res.json())
@@ -288,9 +351,12 @@ function fetchSheetData() {
       if(data.error) throw new Error(data.error);
       inventory = {};
       data.plants.forEach(p => { inventory[p.id] = p; });
-      transactions = data.transactions;
+      transactions = data.transactions || [];
+      pickTickets = data.pickTickets || [];
+      
       renderInventory();
       renderSelectedPlant();
+      renderPickTicketDropdown();
       renderHistory();
     })
     .catch(err => {
@@ -298,7 +364,6 @@ function fetchSheetData() {
     });
 }
 
-// Send POST requests to Google Sheet API
 function sendApiRequest(payload, onSuccess, onError) {
   fetch(GAS_API_URL, {
     method: "POST",
@@ -319,17 +384,16 @@ function sendApiRequest(payload, onSuccess, onError) {
 function escapeHTML(v){ return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 
 function showScreen(screen){
-  ["inventory","move","history"].forEach(s => {
+  ["inventory","move","pickTickets","history"].forEach(s => {
     document.getElementById(s+"Screen").classList.toggle("hidden", s !== screen);
     document.getElementById(s+"Tab").classList.toggle("active", s === screen);
   });
   if(screen === "inventory") renderInventory();
   if(screen === "move") renderSelectedPlant();
+  if(screen === "pickTickets") renderPickTicketDropdown();
   if(screen === "history") renderHistory();
   window.scrollTo(0,0);
 }
-
-let currentSearchQuery = "";
 
 function filterInventory() {
   currentSearchQuery = document.getElementById("inventorySearch").value.toLowerCase().trim();
@@ -340,7 +404,6 @@ function renderInventory(){
   const c = document.getElementById("inventoryList");
   c.innerHTML = "";
   
-  // Filter inventory items based on search query matching name, ID, or location
   const filteredPlants = Object.values(inventory).filter(p => {
     if (!currentSearchQuery) return true;
     return (
@@ -379,6 +442,7 @@ function renderInventory(){
     c.appendChild(r);
   });
 }
+
 function renderSelectedPlant(){
   const p = inventory[selectedPlantId];
   if(!p){ showScreen("inventory"); return; }
@@ -389,12 +453,92 @@ function renderSelectedPlant(){
   document.getElementById("selectedPlantMeta").textContent = `${p.id} · ${p.location}`;
   document.getElementById("selectedPlantQuantity").textContent = p.quantity;
   
-  // Set Description & Button Action Listeners
   const descEl = document.getElementById("selectedPlantDescription");
   descEl.textContent = p.description || "No description provided.";
   
   document.getElementById("googleSearchButton").onclick = () => searchGoogleImages(p.name);
   document.getElementById("inAppGalleryButton").onclick = () => openInAppGallery(p.name);
+}
+
+// PICK TICKETS HANDLERS
+function renderPickTicketDropdown() {
+  const select = document.getElementById("pickTicketSelect");
+  select.innerHTML = '<option value="">-- Choose Pick Sheet --</option>';
+  pickTickets.forEach((pt, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = pt.title || pt.sheetName;
+    select.appendChild(opt);
+  });
+}
+
+function renderSelectedPickTicket() {
+  const idx = document.getElementById("pickTicketSelect").value;
+  const card = document.getElementById("pickTicketDetailsCard");
+  const list = document.getElementById("pickTicketList");
+  
+  if (idx === "") {
+    card.classList.add("hidden");
+    return;
+  }
+  
+  const pt = pickTickets[idx];
+  card.classList.remove("hidden");
+  document.getElementById("pickTicketTitle").textContent = pt.title || pt.sheetName;
+  list.innerHTML = "";
+
+  if(!pt.items || pt.items.length === 0){
+    list.innerHTML = '<div class="empty">No items listed on this pick sheet.</div>';
+    return;
+  }
+
+  pt.items.forEach(item => {
+    const row = document.createElement("div");
+    row.style.cssText = "padding:10px 0; border-bottom:1px solid #eef2ed; display:flex; justify-content:space-between; align-items:center; gap:10px;";
+    row.innerHTML = `
+      <div style="flex:1;">
+        <strong>${escapeHTML(item.plantIdOrName)}</strong>
+        <div style="font-size:13px; color:#687268;">Needed: ${item.needed}</div>
+      </div>
+      <div style="width:90px;">
+        <label style="font-size:11px; margin-bottom:2px;">Picked</label>
+        <input type="number" class="picked-input" data-row="${item.rowIdx}" value="${item.picked}" min="0" style="margin-bottom:0; text-align:center;">
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function submitPickTicket() {
+  const idx = document.getElementById("pickTicketSelect").value;
+  if (idx === "") return;
+  
+  const pt = pickTickets[idx];
+  const inputs = document.querySelectorAll("#pickTicketList .picked-input");
+  const updates = [];
+
+  inputs.forEach(inp => {
+    updates.push({
+      rowIdx: Number(inp.dataset.row),
+      pickedQty: Number(inp.value) || 0
+    });
+  });
+
+  const msg = document.getElementById("pickTicketMessage");
+  msg.textContent = "Saving to Google Sheet...";
+  msg.className = "message";
+
+  sendApiRequest({
+    action: "updatePickTicket",
+    sheetName: pt.sheetName,
+    updates: updates
+  }, function() {
+    msg.textContent = "✓ Picked quantities updated successfully!";
+    msg.className = "message success";
+  }, function(err) {
+    msg.textContent = "Error saving pick ticket: " + err.message;
+    msg.className = "message";
+  });
 }
 
 function changeInventory(amount){
@@ -497,7 +641,7 @@ function closeNewPlantForm(){
   document.getElementById("newPlantMessage").textContent = "";
 }
 
-// Live WebRTC Camera Scanner
+// Live Camera Scanner
 async function startScanner(){
   const wrap = document.getElementById("scannerWrap");
   const status = document.getElementById("scanStatus");
@@ -547,6 +691,7 @@ async function onScanSuccess(decodedText){
 
 document.getElementById("inventoryTab").onclick = () => showScreen("inventory");
 document.getElementById("moveTab").onclick = () => showScreen("move");
+document.getElementById("pickTicketsTab").onclick = () => showScreen("pickTickets");
 document.getElementById("historyTab").onclick = () => showScreen("history");
 document.getElementById("openPlantButton").onclick = openPlant;
 document.getElementById("plantLookup").onkeydown = e => { if(e.key === "Enter") openPlant(); };
