@@ -225,7 +225,7 @@ let inventory = {}, selectedPlantId = "P-001", transactions = [], pickTickets = 
 let currentSearchQuery = "";
 let html5QrCode = null;
 
-// Cleaned Google Image Search Link (removes sponsored / shopping artifacts)
+// Cleaned Google Image Search Link
 function searchGoogleImages(plantName) {
   if (!plantName) return;
   const cleanName = plantName.replace(/['"]/g, '').trim();
@@ -543,22 +543,6 @@ function submitPickTicket() {
     updates: updates
   }, function() {
     msg.textContent = "✓ Pick ticket updated successfully!";
-    msg.className = "message success";
-  }, function(err) {
-    msg.textContent = "Error saving pick ticket: " + err.message;
-    msg.className = "message";
-  });
-}
-  const msg = document.getElementById("pickTicketMessage");
-  msg.textContent = "Saving to Google Sheet...";
-  msg.className = "message";
-
-  sendApiRequest({
-    action: "updatePickTicket",
-    sheetName: pt.sheetName,
-    updates: updates
-  }, function() {
-    msg.textContent = "✓ Picked quantities updated successfully!";
     msg.className = "message success";
   }, function(err) {
     msg.textContent = "Error saving pick ticket: " + err.message;
