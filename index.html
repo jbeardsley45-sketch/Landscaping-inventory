@@ -494,15 +494,24 @@ function renderSelectedPickTicket() {
 
   pt.items.forEach(item => {
     const row = document.createElement("div");
-    row.style.cssText = "padding:10px 0; border-bottom:1px solid #eef2ed; display:flex; justify-content:space-between; align-items:center; gap:10px;";
+    row.style.cssText = "padding:14px 0; border-bottom:1px solid #eef2ed;";
     row.innerHTML = `
-      <div style="flex:1;">
-        <strong>${escapeHTML(item.plantIdOrName)}</strong>
-        <div style="font-size:13px; color:#687268;">Needed: ${item.needed}</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+        <div>
+          <strong style="font-size:16px;">${escapeHTML(item.plant)}</strong>
+          <div style="font-size:13px; color:#687268; margin-top:2px;">
+            ${item.type ? `Type: <strong>${escapeHTML(item.type)}</strong> · ` : ''}
+            Pref Size: <strong>${escapeHTML(item.preferredSize || 'N/A')}</strong>
+          </div>
+          ${item.notes ? `<div style="font-size:12px; color:#4a544a; margin-top:4px; font-style:italic;">Note: ${escapeHTML(item.notes)}</div>` : ''}
+        </div>
+        <div style="text-align:right; font-size:12px; color:#687268;">
+          <div>Current Inv: <strong>${item.currentInventory}</strong></div>
+        </div>
       </div>
-      <div style="width:90px;">
-        <label style="font-size:11px; margin-bottom:2px;">Picked</label>
-        <input type="number" class="picked-input" data-row="${item.rowIdx}" value="${item.picked}" min="0" style="margin-bottom:0; text-align:center;">
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:6px;">
+        <label style="font-size:13px; margin-bottom:0;">Amount to Pick:</label>
+        <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${item.amountToPick}" min="0" style="width:100px; margin-bottom:0; text-align:center;">
       </div>
     `;
     list.appendChild(row);
@@ -514,16 +523,32 @@ function submitPickTicket() {
   if (idx === "") return;
   
   const pt = pickTickets[idx];
-  const inputs = document.querySelectorAll("#pickTicketList .picked-input");
+  const inputs = document.querySelectorAll("#pickTicketList .amount-picked-input");
   const updates = [];
 
   inputs.forEach(inp => {
     updates.push({
       rowIdx: Number(inp.dataset.row),
-      pickedQty: Number(inp.value) || 0
+      amountToPick: Number(inp.value) || 0
     });
   });
 
+  const msg = document.getElementById("pickTicketMessage");
+  msg.textContent = "Saving to Google Sheet...";
+  msg.className = "message";
+
+  sendApiRequest({
+    action: "updatePickTicket",
+    sheetName: pt.sheetName,
+    updates: updates
+  }, function() {
+    msg.textContent = "✓ Pick ticket updated successfully!";
+    msg.className = "message success";
+  }, function(err) {
+    msg.textContent = "Error saving pick ticket: " + err.message;
+    msg.className = "message";
+  });
+}
   const msg = document.getElementById("pickTicketMessage");
   msg.textContent = "Saving to Google Sheet...";
   msg.className = "message";
