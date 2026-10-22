@@ -506,10 +506,12 @@ function renderSelectedPickTicket() {
           </div>
           ${item.notes ? `<div style="font-size:12px; color:#4a544a; margin-top:4px; font-style:italic;">Note: ${escapeHTML(item.notes)}</div>` : ''}
           
-          <!-- Amount Picked Entry Box Positioned Under Notes -->
-          <div style="margin-top:10px; max-width:180px;">
-            <label style="font-size:13px; margin-bottom:4px; font-weight:bold; color:#324a2e;">Amount picked:</label>
-            <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${item.amountToPick}" min="0" style="margin-bottom:0; text-align:center;">
+          <!-- Amount Picked Label with inline number and input box side-by-side -->
+          <div style="display:flex; align-items:center; gap:12px; margin-top:10px;">
+            <span style="font-size:14px; font-weight:bold; color:#324a2e;">
+              Amount picked: <span style="color:#c53030; font-weight:bold;">${item.amountToPick}</span>
+            </span>
+            <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${item.amountToPick}" min="0" style="width:100px; margin-bottom:0; text-align:center;">
           </div>
         </div>
         <div style="text-align:right; font-size:12px; color:#687268; flex-shrink:0; margin-left:10px;">
@@ -520,7 +522,6 @@ function renderSelectedPickTicket() {
     list.appendChild(row);
   });
 }
-
 function submitPickTicket() {
   const idx = document.getElementById("pickTicketSelect").value;
   if (idx === "") return;
