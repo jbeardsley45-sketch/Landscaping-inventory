@@ -498,19 +498,21 @@ function renderSelectedPickTicket() {
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
         <div>
-          <strong style="font-size:16px;">${escapeHTML(item.plant)}</strong>
-          <div style="font-size:13px; color:#687268; margin-top:2px;">
-            ${item.type ? `Type: <strong>${escapeHTML(item.type)}</strong> · ` : ''}
-            Pref Size: <strong>${escapeHTML(item.preferredSize || 'N/A')}</strong>
+          <!-- Plant Name is now the large header -->
+          <strong style="font-size:18px; color:#263126;">${escapeHTML(item.plant)}</strong>
+          <div style="font-size:13px; color:#687268; margin-top:3px;">
+            ID: <strong>${escapeHTML(item.idNumber)}</strong> 
+            ${item.type ? `· Type: <strong>${escapeHTML(item.type)}</strong>` : ''}
+            ${item.preferredSize ? `· Pref Size: <strong>${escapeHTML(item.preferredSize)}</strong>` : ''}
           </div>
           ${item.notes ? `<div style="font-size:12px; color:#4a544a; margin-top:4px; font-style:italic;">Note: ${escapeHTML(item.notes)}</div>` : ''}
         </div>
-        <div style="text-align:right; font-size:12px; color:#687268;">
-          <div>Current Inv: <strong>${item.currentInventory}</strong></div>
+        <div style="text-align:right; font-size:12px; color:#687268; flex-shrink:0; margin-left:10px;">
+          <div>Current Inv: <strong style="font-size:15px; color:#263126;">${item.currentInventory}</strong></div>
         </div>
       </div>
-      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:6px;">
-        <label style="font-size:13px; margin-bottom:0;">Amount to Pick:</label>
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:8px;">
+        <label style="font-size:13px; margin-bottom:0; font-weight:bold;">Amount to Pick:</label>
         <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${item.amountToPick}" min="0" style="width:100px; margin-bottom:0; text-align:center;">
       </div>
     `;
