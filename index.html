@@ -495,6 +495,10 @@ function renderSelectedPickTicket() {
   pt.items.forEach(item => {
     const row = document.createElement("div");
     row.style.cssText = "padding:14px 0; border-bottom:1px solid #eef2ed;";
+    
+    // Use actualPick if already saved in Col H, otherwise default to amountToPick from Col D
+    const initialInputVal = (item.actualPick !== undefined && item.actualPick !== 0) ? item.actualPick : item.amountToPick;
+
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
         <div style="flex:1;">
@@ -506,12 +510,12 @@ function renderSelectedPickTicket() {
           </div>
           ${item.notes ? `<div style="font-size:12px; color:#4a544a; margin-top:4px; font-style:italic;">Note: ${escapeHTML(item.notes)}</div>` : ''}
           
-          <!-- Amount Picked Label with inline number and input box side-by-side -->
+          <!-- Amount to be picked label (from Col D) and side-by-side input box -->
           <div style="display:flex; align-items:center; gap:12px; margin-top:10px;">
             <span style="font-size:14px; font-weight:bold; color:#324a2e;">
               Amount to be picked: <span style="color:#c53030; font-weight:bold;">${item.amountToPick}</span>
             </span>
-            <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${item.amountToPick}" min="0" style="width:100px; margin-bottom:0; text-align:center;">
+            <input type="number" class="amount-picked-input" data-row="${item.rowIdx}" value="${initialInputVal}" min="0" style="width:100px; margin-bottom:0; text-align:center;">
           </div>
         </div>
         <div style="text-align:right; font-size:12px; color:#687268; flex-shrink:0; margin-left:10px;">
@@ -522,6 +526,7 @@ function renderSelectedPickTicket() {
     list.appendChild(row);
   });
 }
+
 function submitPickTicket() {
   const idx = document.getElementById("pickTicketSelect").value;
   if (idx === "") return;
@@ -533,7 +538,7 @@ function submitPickTicket() {
   inputs.forEach(inp => {
     updates.push({
       rowIdx: Number(inp.dataset.row),
-      amountToPick: Number(inp.value) || 0
+      pickedQty: Number(inp.value) || 0
     });
   });
 
