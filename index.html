@@ -229,8 +229,9 @@ let html5QrCode = null;
 function searchGoogleImages(plantName) {
   if (!plantName) return;
   const cleanName = plantName.replace(/['"]/g, '').trim();
-  const query = encodeURIComponent(`${cleanName} plant botanical foliage -buy -shop -store -price -sponsored`);
-  window.open(`https://www.google.com/search?q=${query}&tbm=isch&udm=2`, '_blank');
+  // Using explicit mobile-friendly image parameters to skip shopping modules
+  const query = encodeURIComponent(`${cleanName} plant botanical foliage`);
+  window.open(`https://www.google.com/search?q=${query}&tbm=isch&source=lnms`, '_blank');
 }
 
 // Dynamic Wikipedia & Wikimedia Plant Photo Gallery
