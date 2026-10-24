@@ -429,7 +429,7 @@ function renderInventory(){
       <div class="plant-row-left">
         <img class="plant-photo" src="${escapeHTML(photoUrl)}" alt="">
         <div>
-          <div class="plant-row-name">${escapeHTML(p.name)}</div>
+          <div class="plant-row-name">${escapeHTML(p.name || p.id || 'Unnamed Plant')}</div>
           <div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div>
           ${descriptionText ? `<div class="plant-row-desc">${descriptionText}</div>` : ''}
         </div>
