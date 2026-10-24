@@ -302,7 +302,7 @@ async function openInAppGallery(plantName) {
     grid.innerHTML = "";
     
     if (imageUrls.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No specific photos found for "${plantName}".<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images Instead</button></div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No specific photos found for "${plantName}".<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Web Images Instead</button></div>`;
       return;
     }
     
@@ -322,7 +322,7 @@ async function openInAppGallery(plantName) {
 
   } catch (err) {
     console.error(err);
-    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Web Images</button></div>`;
   }
 }
 
