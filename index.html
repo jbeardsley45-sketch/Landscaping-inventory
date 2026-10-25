@@ -3,23 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Plant Inventory</title>
+<title>Plant & Material Inventory</title>
 
 <!-- Favicon & iOS Home Screen Icon -->
 <link rel="icon" type="image/png" sizes="32x32" href="./tree-icon.png?v=2">
 <link rel="apple-touch-icon" href="./tree-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Plant Inventory">
+<meta name="apple-mobile-web-app-title" content="Inventory">
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 body { margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background:#f4f6f3; color:#263126; }
 .app { max-width:600px; margin:0 auto; padding:16px; }
-header { padding:10px 0 20px; } header h1 { margin:0; font-size:28px; } header p { margin:5px 0 0; color:#687268; }
+header { padding:10px 0 16px; } header h1 { margin:0; font-size:28px; } header p { margin:5px 0 0; color:#687268; }
 .tabs { display:flex; gap:6px; margin-bottom:16px; }
 .tab { flex:1; padding:12px 6px; border:1px solid #ccd3cc; border-radius:8px; background:#fff; font-weight:bold; text-align:center; cursor:pointer; font-size:14px; }
 .tab.active { background:#dfe9dc; border-color:#9aae96; }
+
+/* Category Toggle Switch */
+.type-toggle-wrap { display:flex; background:#e2e8e1; border-radius:10px; padding:4px; margin-bottom:16px; border:1px solid #ccd3cc; }
+.type-toggle-btn { flex:1; padding:10px; border:none; background:transparent; font-size:15px; font-weight:bold; color:#525f52; border-radius:8px; cursor:pointer; transition:all 0.2s ease; }
+.type-toggle-btn.active { background:#fff; color:#263126; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+
 .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid #dfe4df; }
 label { display:block; font-size:14px; font-weight:bold; margin-bottom:6px; }
 input, select, textarea { box-sizing:border-box; width:100%; padding:12px; border:1px solid #cbd2cb; border-radius:8px; font-size:16px; margin-bottom:12px; font-family:inherit; }
@@ -59,24 +65,30 @@ button:active { transform:scale(0.98); }
 <body>
 <div class="app">
 <header>
-  <h1>Plant Inventory</h1>
-  <p>Landscape inventory management</p>
+  <h1>Landscape Inventory</h1>
+  <p>Plants and materials management</p>
 </header>
 
 <div class="tabs">
   <button class="tab active" id="inventoryTab">Inventory</button>
-  <button class="tab" id="moveTab">Move Plants</button>
+  <button class="tab" id="moveTab">Move Items</button>
   <button class="tab" id="pickTicketsTab">Pick Tickets</button>
   <button class="tab" id="historyTab">History</button>
 </div>
 
 <!-- INVENTORY SCREEN -->
 <section id="inventoryScreen">
+  <!-- Toggle Switch between Plants and Materials -->
+  <div class="type-toggle-wrap">
+    <button class="type-toggle-btn active" id="plantsToggleBtn" onclick="switchCategory('plants')">🌿 Plants</button>
+    <button class="type-toggle-btn" id="materialsToggleBtn" onclick="switchCategory('materials')">🪨 Materials</button>
+  </div>
+
   <!-- Scanner Card (Positioned Above Inventory List) -->
   <div class="card">
-    <label>Scan QR Code or Enter Plant ID</label>
+    <label id="lookupLabel">Scan QR Code or Enter Item ID</label>
     <div class="lookup">
-      <input id="plantLookup" placeholder="e.g. P-001">
+      <input id="plantLookup" placeholder="e.g. P-001 or M-001">
       <button class="primary" id="openPlantButton">Open</button>
     </div>
     
@@ -92,18 +104,18 @@ button:active { transform:scale(0.98); }
   <!-- Current Inventory Card -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <strong>Current Inventory</strong>
-      <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Plant</button>
+      <strong id="inventoryHeaderTitle">Current Plants Inventory</strong>
+      <button id="addPlantButton" style="width:auto; min-height:36px; padding:6px 12px;">+ Add Item</button>
     </div>
     
     <!-- Real-time Live Search Input -->
-    <input id="inventorySearch" placeholder="🔍 Search inventory by name or ID..." style="margin-bottom:12px;" oninput="filterInventory()">
+    <input id="inventorySearch" placeholder="🔍 Search by name or ID..." style="margin-bottom:12px;" oninput="filterInventory()">
 
     <div id="inventoryList"></div>
   </div>
 </section>
 
-<!-- MOVE PLANTS SCREEN -->
+<!-- MOVE ITEMS SCREEN -->
 <section id="moveScreen" class="hidden">
   <div class="card">
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px">
@@ -119,8 +131,8 @@ button:active { transform:scale(0.98); }
     
     <!-- Action Buttons for Photos -->
     <div style="display:flex; gap:8px; margin-top:12px; margin-bottom:14px;">
-      <button class="secondary" id="inAppGalleryButton" style="flex:1;">🖼 Open Wiki Photo Gallery</button>
-      <button class="secondary" id="googleSearchButton" style="flex:1;">🔍 Search Web Images</button>
+      <button class="secondary" id="inAppGalleryButton" style="flex:1;">🖼 Open Photo Gallery</button>
+      <button class="secondary" id="googleSearchButton" style="flex:1;">🔍 Search Google Images</button>
     </div>
 
     <div class="plant-header">
@@ -170,18 +182,18 @@ button:active { transform:scale(0.98); }
   </div>
 </section>
 
-<!-- ADD PLANT FORM -->
+<!-- ADD PLANT/MATERIAL FORM -->
 <section class="card hidden" id="addPlantForm">
-  <h3 style="margin-top:0">Add Plant</h3>
-  <label for="newPlantId">Plant ID</label><input id="newPlantId" placeholder="P-005">
-  <label for="newPlantName">Plant Name</label><input id="newPlantName" placeholder="Red Maple">
-  <label for="newPlantLocation">Storage Location</label><input id="newPlantLocation" placeholder="Nursery A">
+  <h3 style="margin-top:0" id="addFormTitle">Add Item</h3>
+  <label for="newPlantId">Item ID</label><input id="newPlantId" placeholder="e.g. P-005 or M-001">
+  <label for="newPlantName">Item Name</label><input id="newPlantName" placeholder="Item Name">
+  <label for="newPlantLocation">Storage Location</label><input id="newPlantLocation" placeholder="Nursery B">
   <label for="newPlantQuantity">Starting Quantity</label><input id="newPlantQuantity" type="number" min="0" step="1" placeholder="25">
-  <label for="newPlantDescription">Description (optional)</label><textarea id="newPlantDescription" placeholder="Sunlight needs, bloom season, size..."></textarea>
+  <label for="newPlantDescription">Description (optional)</label><textarea id="newPlantDescription" placeholder="Details or specifications..."></textarea>
   <label for="newPlantPhoto">Photo URL (optional)</label><input id="newPlantPhoto" placeholder="https://...">
   <div style="display:flex;gap:8px">
     <button id="cancelPlantButton">Cancel</button>
-    <button class="primary" id="savePlantButton">Save Plant</button>
+    <button class="primary" id="savePlantButton">Save Item</button>
   </div>
   <div class="message" id="newPlantMessage"></div>
 </section>
@@ -189,7 +201,7 @@ button:active { transform:scale(0.98); }
 <!-- In-App Image Gallery Modal -->
 <div id="imageGalleryModal" class="card hidden" style="position:fixed; top:5%; left:50%; transform:translateX(-50%); width:90%; max-width:500px; max-height:85vh; z-index:1000; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-    <strong id="galleryTitle">Plant Gallery</strong>
+    <strong id="galleryTitle">Gallery</strong>
     <button onclick="closeGallery()" style="width:auto; min-height:30px; padding:4px 10px;">✕ Close</button>
   </div>
   <div id="galleryGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
@@ -209,72 +221,74 @@ button:active { transform:scale(0.98); }
 function formatPhotoUrl(url) {
   if (!url) return '';
   url = url.trim();
-
   const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=)|lh3\.googleusercontent\.com\/d\/)([a-zA-Z0-9_-]+)/);
   if (driveMatch && driveMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
   }
-
   return url;
 }
 
 // PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE:
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyun8UxWmO0pXjN4cE5pDIBV0K6HeQAPRTIEf1KV3SETYCbe9-YOtpCisa4RHylySQx2g/exec";
 
-let inventory = {}, selectedPlantId = "P-001", transactions = [], pickTickets = [];
+let plantsInventory = {}, materialsInventory = {}, currentCategory = 'plants';
+let selectedPlantId = "", transactions = [], pickTickets = [];
 let currentSearchQuery = "";
 let html5QrCode = null;
 
-// Cleaned Google Image Search Link
+function getCurrentInventory() {
+  return currentCategory === 'plants' ? plantsInventory : materialsInventory;
+}
+
+function switchCategory(cat) {
+  currentCategory = cat;
+  document.getElementById("plantsToggleBtn").classList.toggle("active", cat === 'plants');
+  document.getElementById("materialsToggleBtn").classList.toggle("active", cat === 'materials');
+  document.getElementById("inventoryHeaderTitle").textContent = cat === 'plants' ? "Current Plants Inventory" : "Current Materials Inventory";
+  renderInventory();
+}
+
 function searchGoogleImages(plantName) {
   if (!plantName) return;
   const cleanName = plantName.replace(/['"]/g, '').trim();
-  // Opens DuckDuckGo Images — clean photo grid with no sponsored shopping modules on mobile
-  const url = `https://duckduckgo.com/?q=${encodeURIComponent(cleanName + ' plant')}&iax=images&ia=images`;
-  window.open(url, '_blank');
+  const query = encodeURIComponent(`${cleanName} plant botanical foliage`);
+  window.open(`https://www.google.com/search?q=${query}&tbm=isch&source=lnms`, '_blank');
 }
 
-// Dynamic Wikipedia & Wikimedia Plant Photo Gallery
 async function openInAppGallery(plantName) {
   const modal = document.getElementById("imageGalleryModal");
   const title = document.getElementById("galleryTitle");
   const grid = document.getElementById("galleryGrid");
   
   title.textContent = `Photos: ${plantName}`;
-  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#555;">Searching real photos of ${plantName}...</div>`;
+  grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#555;">Searching photos of ${plantName}...</div>`;
   modal.classList.remove("hidden");
 
   try {
     const cleanName = plantName.replace(/['"]/g, "").trim();
-    
-    // Search Wikipedia/Wikimedia for exact plant page
     const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanName)}&format=json&origin=*`;
     const searchRes = await fetch(searchUrl);
     const searchData = await searchRes.json();
     
     let imageUrls = [];
-    
     if (searchData.query && searchData.query.search.length > 0) {
       const pageTitle = searchData.query.search[0].title;
-      
       const imagesUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=images&imlimit=20&format=json&origin=*`;
       const imgRes = await fetch(imagesUrl);
       const imgData = await imgRes.json();
-      
       const pages = imgData.query.pages;
       const pageId = Object.keys(pages)[0];
       
       if (pages[pageId] && pages[pageId].images) {
         const fileTitles = pages[pageId].images
           .map(img => img.title)
-          .filter(title => /\.(jpg|jpeg|png)$/i.test(title))
+          .filter(t => /\.(jpg|jpeg|png)$/i.test(t))
           .slice(0, 10);
           
         if (fileTitles.length > 0) {
           const detailsUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(fileTitles.join('|'))}&prop=imageinfo&iiprop=url&format=json&origin=*`;
           const detailsRes = await fetch(detailsUrl);
           const detailsData = await detailsRes.json();
-          
           const detailPages = detailsData.query.pages;
           Object.values(detailPages).forEach(p => {
             if (p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url) {
@@ -285,78 +299,54 @@ async function openInAppGallery(plantName) {
       }
     }
     
-    if (imageUrls.length === 0) {
-      const commonsUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanName)}&gsrnamespace=6&gsrlimit=10&prop=imageinfo&iiprop=url&format=json&origin=*`;
-      const commonsRes = await fetch(commonsUrl);
-      const commonsData = await commonsRes.json();
-      
-      if (commonsData.query && commonsData.query.pages) {
-        Object.values(commonsData.query.pages).forEach(p => {
-          if (p.imageinfo && p.imageinfo[0] && p.imageinfo[0].url) {
-            imageUrls.push(p.imageinfo[0].url);
-          }
-        });
-      }
-    }
-    
     grid.innerHTML = "";
-    
     if (imageUrls.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No specific photos found for "${plantName}".<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Web Images Instead</button></div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">No specific photos found.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
       return;
     }
     
     imageUrls.slice(0, 6).forEach((imgUrl, idx) => {
       const imgContainer = document.createElement("div");
       imgContainer.style.cssText = "background:#eef2ed; border-radius:8px; height:140px; overflow:hidden; cursor:pointer; position:relative;";
-      
       const img = document.createElement("img");
       img.src = imgUrl;
       img.alt = `${plantName} photo ${idx + 1}`;
       img.style.cssText = "width:100%; height:100%; object-fit:cover;";
-      
       imgContainer.onclick = () => openImagePreview(imgUrl, `${plantName} - Photo ${idx + 1}`);
       imgContainer.appendChild(img);
       grid.appendChild(imgContainer);
     });
 
   } catch (err) {
-    console.error(err);
-    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Web Images</button></div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:20px;">Could not load photos.<br><br><button class="secondary" onclick="searchGoogleImages('${escapeHTML(plantName)}')">Search Google Images</button></div>`;
   }
 }
 
-function closeGallery() {
-  document.getElementById("imageGalleryModal").classList.add("hidden");
-}
+function closeGallery() { document.getElementById("imageGalleryModal").classList.add("hidden"); }
 
 function openImagePreview(src, caption) {
-  const previewModal = document.getElementById("imagePreviewModal");
-  const previewImg = document.getElementById("fullScreenPreviewImg");
-  const previewCaption = document.getElementById("fullScreenPreviewCaption");
-
-  previewImg.src = src;
-  previewCaption.textContent = caption || "";
-  previewModal.classList.remove("hidden");
+  document.getElementById("fullScreenPreviewImg").src = src;
+  document.getElementById("fullScreenPreviewCaption").textContent = caption || "";
+  document.getElementById("imagePreviewModal").classList.remove("hidden");
 }
 
-function closeImagePreview() {
-  document.getElementById("imagePreviewModal").classList.add("hidden");
-}
+function closeImagePreview() { document.getElementById("imagePreviewModal").classList.add("hidden"); }
 
-// Fetch Sheet Data (Plants, Pick Tickets, and Transactions)
 function fetchSheetData() {
   fetch(GAS_API_URL)
     .then(res => res.json())
     .then(data => {
       if(data.error) throw new Error(data.error);
-      inventory = {};
-      data.plants.forEach(p => { inventory[p.id] = p; });
+      plantsInventory = {};
+      materialsInventory = {};
+      
+      (data.plants || []).forEach(p => { plantsInventory[p.id] = p; });
+      (data.materials || []).forEach(m => { materialsInventory[m.id] = m; });
+      
       transactions = data.transactions || [];
       pickTickets = data.pickTickets || [];
       
       renderInventory();
-      renderSelectedPlant();
       renderPickTicketDropdown();
       renderHistory();
     })
@@ -405,7 +395,8 @@ function renderInventory(){
   const c = document.getElementById("inventoryList");
   c.innerHTML = "";
   
-  const filteredPlants = Object.values(inventory).filter(p => {
+  const activeDict = getCurrentInventory();
+  const filteredItems = Object.values(activeDict).filter(p => {
     if (!currentSearchQuery) return true;
     return (
       (p.name && p.name.toLowerCase().includes(currentSearchQuery)) ||
@@ -414,13 +405,14 @@ function renderInventory(){
     );
   });
 
-  if (filteredPlants.length === 0) {
-    c.innerHTML = '<div class="empty" style="text-align:center; padding:20px;">No matching plants found.</div>';
+  if (filteredItems.length === 0) {
+    c.innerHTML = `<div class="empty" style="text-align:center; padding:20px;">No matching ${currentCategory} found.</div>`;
     return;
   }
 
-  filteredPlants.forEach(p => {
+  filteredItems.forEach(p => {
     const photoUrl = formatPhotoUrl(p.photo);
+    const displayName = p.name || p.id || 'Unnamed Item';
     const descriptionText = p.description ? escapeHTML(p.description) : "";
     
     const r = document.createElement("div");
@@ -429,13 +421,13 @@ function renderInventory(){
       <div class="plant-row-left">
         <img class="plant-photo" src="${escapeHTML(photoUrl)}" alt="">
         <div>
-          <div class="plant-row-name">${escapeHTML(p.name || p.id || 'Unnamed Plant')}</div>
+          <div class="plant-row-name">${escapeHTML(displayName)}</div>
           <div class="plant-row-meta">${escapeHTML(p.id)} · ${escapeHTML(p.location)}</div>
           ${descriptionText ? `<div class="plant-row-desc">${descriptionText}</div>` : ''}
         </div>
       </div>
       <div class="plant-row-right">
-        <button class="search-btn-icon" title="Search images on Google" onclick="event.stopPropagation(); searchGoogleImages('${escapeHTML(p.name)}')">🔍</button>
+        <button class="search-btn-icon" title="Search images on Google" onclick="event.stopPropagation(); searchGoogleImages('${escapeHTML(displayName)}')">🔍</button>
         <div class="plant-row-quantity">${p.quantity}</div>
       </div>
     `;
@@ -445,20 +437,26 @@ function renderInventory(){
 }
 
 function renderSelectedPlant(){
-  const p = inventory[selectedPlantId];
+  const activeDict = getCurrentInventory();
+  let p = activeDict[selectedPlantId];
+  if (!p) {
+    // Check other dict if category was switched
+    p = plantsInventory[selectedPlantId] || materialsInventory[selectedPlantId];
+  }
   if(!p){ showScreen("inventory"); return; }
+  
   const photoUrl = formatPhotoUrl(p.photo);
+  const displayName = p.name || p.id || 'Unnamed Item';
+
   document.getElementById("selectedPlantPhoto").src = photoUrl;
-  document.getElementById("selectedPlantPhoto").alt = p.name;
-  document.getElementById("selectedPlantName").textContent = p.name;
+  document.getElementById("selectedPlantPhoto").alt = displayName;
+  document.getElementById("selectedPlantName").textContent = displayName;
   document.getElementById("selectedPlantMeta").textContent = `${p.id} · ${p.location}`;
   document.getElementById("selectedPlantQuantity").textContent = p.quantity;
   
-  const descEl = document.getElementById("selectedPlantDescription");
-  descEl.textContent = p.description || "No description provided.";
-  
-  document.getElementById("googleSearchButton").onclick = () => searchGoogleImages(p.name);
-  document.getElementById("inAppGalleryButton").onclick = () => openInAppGallery(p.name);
+  document.getElementById("selectedPlantDescription").textContent = p.description || "No description provided.";
+  document.getElementById("googleSearchButton").onclick = () => searchGoogleImages(displayName);
+  document.getElementById("inAppGalleryButton").onclick = () => openInAppGallery(displayName);
 }
 
 // PICK TICKETS HANDLERS
@@ -496,8 +494,6 @@ function renderSelectedPickTicket() {
   pt.items.forEach(item => {
     const row = document.createElement("div");
     row.style.cssText = "padding:14px 0; border-bottom:1px solid #eef2ed;";
-    
-    // Use actualPick if already saved in Col H, otherwise default to amountToPick from Col D
     const initialInputVal = (item.actualPick !== undefined && item.actualPick !== 0) ? item.actualPick : item.amountToPick;
 
     row.innerHTML = `
@@ -511,7 +507,6 @@ function renderSelectedPickTicket() {
           </div>
           ${item.notes ? `<div style="font-size:12px; color:#4a544a; margin-top:4px; font-style:italic;">Note: ${escapeHTML(item.notes)}</div>` : ''}
           
-          <!-- Amount to be picked label (from Col D) and side-by-side input box -->
           <div style="display:flex; align-items:center; gap:12px; margin-top:10px;">
             <span style="font-size:14px; font-weight:bold; color:#324a2e;">
               Amount to be picked: <span style="color:#c53030; font-weight:bold;">${item.amountToPick}</span>
@@ -561,15 +556,20 @@ function submitPickTicket() {
 }
 
 function changeInventory(amount){
-  const p = inventory[selectedPlantId], q = Number(document.getElementById("moveQuantity").value);
+  const activeDict = getCurrentInventory();
+  let p = activeDict[selectedPlantId];
+  if(!p) p = plantsInventory[selectedPlantId] || materialsInventory[selectedPlantId];
   if(!p) return;
+
+  const q = Number(document.getElementById("moveQuantity").value);
   if(!Number.isInteger(q) || q < 1) return showMoveMessage("Enter a whole number greater than zero.");
-  if(amount < 0 && q > p.quantity) return showMoveMessage("You cannot remove more plants than are in inventory.");
+  if(amount < 0 && q > p.quantity) return showMoveMessage("You cannot remove more than is in inventory.");
 
   const action = amount > 0 ? "Add" : "Remove";
 
   sendApiRequest({
     action: "updateInventory",
+    sheetType: currentCategory,
     plantId: p.id,
     inventoryAction: action,
     changeQty: q
@@ -578,7 +578,7 @@ function changeInventory(amount){
     transactions.unshift({
       timestamp: response.timestamp,
       plantId: p.id,
-      plantName: p.name,
+      plantName: p.name || p.id,
       action: action === "Add" ? "Added" : "Removed",
       quantity: q,
       balance: response.newQuantity
@@ -612,7 +612,9 @@ function renderHistory(){
 
 function openPlant(){
   const id = document.getElementById("plantLookup").value.trim().toUpperCase();
-  if(!inventory[id]) return alert("Plant not found in Google Sheets.");
+  const activeDict = getCurrentInventory();
+  let item = activeDict[id] || plantsInventory[id] || materialsInventory[id];
+  if(!item) return alert("Item ID not found in Google Sheets.");
   selectedPlantId = id;
   showScreen("move");
 }
@@ -627,16 +629,13 @@ function saveNewPlant(){
         msg = document.getElementById("newPlantMessage");
 
   if(!id || !name || !location || !Number.isInteger(quantity) || quantity < 0){
-    msg.textContent = "Please complete all fields.";
-    return;
-  }
-  if(inventory[id]){
-    msg.textContent = "That Plant ID already exists.";
+    msg.textContent = "Please complete all required fields.";
     return;
   }
 
   sendApiRequest({
     action: "addNewPlant",
+    sheetType: currentCategory,
     id: id,
     name: name,
     location: location,
@@ -644,13 +643,14 @@ function saveNewPlant(){
     description: description,
     photo: photo
   }, function() {
-    inventory[id] = { id, name, location, quantity, description, photo };
+    const dict = getCurrentInventory();
+    dict[id] = { id, name, location, quantity, description, photo };
     selectedPlantId = id;
     closeNewPlantForm();
     renderInventory();
     showScreen("move");
   }, function(err) {
-    msg.textContent = "Error saving plant: " + err.message;
+    msg.textContent = "Error saving item: " + err.message;
   });
 }
 
@@ -679,7 +679,7 @@ async function startScanner(){
     );
     status.textContent = "Point camera at a QR code.";
   } catch(e) {
-    status.textContent = "Could not access camera. Make sure camera permissions are allowed.";
+    status.textContent = "Could not access camera. Check permissions.";
     console.error(e);
   }
 }
@@ -696,9 +696,12 @@ async function stopScanner(){
 async function onScanSuccess(decodedText){
   const id = decodedText.trim().toUpperCase();
   const status = document.getElementById("scanStatus");
-  if(!inventory[id]){
+  const activeDict = getCurrentInventory();
+  let item = activeDict[id] || plantsInventory[id] || materialsInventory[id];
+  
+  if(!item){
     status.classList.remove("hidden");
-    status.textContent = `Scanned "${decodedText}" — No matching Plant ID.`;
+    status.textContent = `Scanned "${decodedText}" — No matching Item ID.`;
     return;
   }
   await stopScanner();
