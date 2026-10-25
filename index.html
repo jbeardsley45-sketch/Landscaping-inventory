@@ -443,7 +443,24 @@ function renderSelectedPlant(){
     // Check other dict if category was switched
     p = plantsInventory[selectedPlantId] || materialsInventory[selectedPlantId];
   }
-  if(!p){ showScreen("inventory"); return; }
+  
+  // If no item is selected yet, default to the first available item in the active category
+  if(!p) {
+    const keys = Object.keys(activeDict);
+    if(keys.length > 0) {
+      selectedPlantId = keys[0];
+      p = activeDict[selectedPlantId];
+    }
+  }
+
+  if(!p){ 
+    document.getElementById("selectedPlantName").textContent = "No item selected";
+    document.getElementById("selectedPlantMeta").textContent = "Choose an item from the inventory list first";
+    document.getElementById("selectedPlantQuantity").textContent = "0";
+    document.getElementById("selectedPlantDescription").textContent = "";
+    document.getElementById("selectedPlantPhoto").src = "";
+    return; 
+  }
   
   const photoUrl = formatPhotoUrl(p.photo);
   const displayName = p.name || p.id || 'Unnamed Item';
